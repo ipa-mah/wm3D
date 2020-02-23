@@ -1,0 +1,2 @@
+/usr/bin/ar qc libperception_utils.a  CMakeFiles/perception_utils.dir/common/src/gbuffer.cpp.o CMakeFiles/perception_utils.dir/common/src/view_generator.cpp.o CMakeFiles/perception_utils.dir/common/src/vision_utils.cpp.o CMakeFiles/perception_utils.dir/common/src/visualizer.cpp.o
+/usr/bin/ranlib libperception_utils.a
