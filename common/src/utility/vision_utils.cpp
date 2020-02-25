@@ -1,8 +1,9 @@
-#include "perception_utils/vision_utils.hpp"
+#include "perception_utils/utility/vision_utils.hpp"
 #define TINYOBJLOADER_IMPLEMENTATION
 #include "tinyobjloader/tiny_obj_loader.h"
+namespace  VisionUtils {
 
-bool VisionUtils::readOBJFromFile(const std::string& filename,TextureMeshPtr& mesh)
+bool readOBJFromFile(const std::string& filename,TextureMeshPtr& mesh)
 {
     mesh = TextureMeshPtr(new TextureMesh);
     tinyobj::attrib_t attrib;
@@ -30,6 +31,7 @@ bool VisionUtils::readOBJFromFile(const std::string& filename,TextureMeshPtr& me
         tinyobj::real_t vy = attrib.vertices[vidx + 1];
         tinyobj::real_t vz = attrib.vertices[vidx + 2];
         mesh->vertices_.push_back(Eigen::Vector3d(vx, vy, vz));
+        mesh->point_cloud_.push_back(pcl::PointXYZ(vx, vy, vz));
     }
 
     for (size_t vidx = 0; vidx < attrib.colors.size(); vidx += 3) {
@@ -49,7 +51,7 @@ bool VisionUtils::readOBJFromFile(const std::string& filename,TextureMeshPtr& me
             int fv = shapes[s].mesh.num_face_vertices[f];
             if (fv != 3) {
                 PRINT_RED("Read OBJ failed: facet with number of vertices not "
-                        "equal to 3");
+                          "equal to 3");
                 return false;
             }
 
@@ -60,7 +62,7 @@ bool VisionUtils::readOBJFromFile(const std::string& filename,TextureMeshPtr& me
                 facet(v) = vidx;
 
                 if (!attrib.normals.empty() && !normals_indicator[vidx] &&
-                    (3 * idx.normal_index + 2) < int(attrib.normals.size())) {
+                        (3 * idx.normal_index + 2) < int(attrib.normals.size())) {
                     tinyobj::real_t nx =
                             attrib.normals[3 * idx.normal_index + 0];
                     tinyobj::real_t ny =
@@ -74,7 +76,7 @@ bool VisionUtils::readOBJFromFile(const std::string& filename,TextureMeshPtr& me
                 }
 
                 if (!attrib.texcoords.empty() &&
-                    2 * idx.texcoord_index + 1 < int(attrib.texcoords.size())) {
+                        2 * idx.texcoord_index + 1 < int(attrib.texcoords.size())) {
                     tinyobj::real_t tx =
                             attrib.texcoords[2 * idx.texcoord_index + 0];
                     tinyobj::real_t ty =
@@ -84,7 +86,7 @@ bool VisionUtils::readOBJFromFile(const std::string& filename,TextureMeshPtr& me
             }
             mesh->triangles_.push_back(facet);
             mesh->triangle_material_ids_.push_back(
-                    shapes[s].mesh.material_ids[f]);
+                        shapes[s].mesh.material_ids[f]);
             index_offset += fv;
         }
     }
@@ -113,3 +115,4 @@ bool VisionUtils::readOBJFromFile(const std::string& filename,TextureMeshPtr& me
     return true;
 }
 
+}

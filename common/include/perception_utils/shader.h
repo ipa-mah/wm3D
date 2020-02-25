@@ -1,22 +1,20 @@
 #ifndef SHADER_H
 #define SHADER_H
 
-#include <stdio.h>
-#include <string>
-#include <vector>
+
 #include <iostream>
 #include <fstream>
-#include <stdlib.h>
-#include <string.h>
+#include <memory>
 #include <GL/glew.h>
-
+#include <eigen3/Eigen/Core>
 class Shader
 {
 public:
     unsigned int programID_;
 
     Shader() {}
-
+    using Ptr = std::shared_ptr<Shader>;
+    using ConstPtr = std::shared_ptr<const Shader>;
     // ------------------------------------------------------------------------
     // generate the shader on the fly
     void LoadShaders(const char *vertex_file_path, const char *fragment_file_path)
@@ -36,15 +34,13 @@ public:
             while (getline(VertexShaderStream, Line))
                 VertexShaderCode += "\n" + Line;
             VertexShaderStream.close();
-
         }
         else
         {
             printf(
-                        "Impossible to open %s. Are you in the right directory ? Don't forget to read the FAQ !\n", vertex_file_path);
+                "Impossible to open %s. Are you in the right directory ? Don't forget to read the FAQ !\n", vertex_file_path);
             getchar();
             return;
-
         }
 
         // Read the Fragment Shader code from the file
@@ -60,7 +56,6 @@ public:
 
         GLint Result = GL_FALSE;
         int InfoLogLength;
-
 
         // Compile Vertex Shader
         printf("Compiling shader : %s\n", vertex_file_path);
@@ -139,49 +134,55 @@ public:
         glUniform1f(glGetUniformLocation(programID_, name.c_str()), value);
     }
     // ------------------------------------------------------------------------
-   /*
-    void setVec2(const std::string &name, const glm::vec2 &value) const
+    void setVec2(const std::string &name, const Eigen::Vector2f &value) const
     {
-        glUniform2fv(glGetUniformLocation(programID_, name.c_str()), 1, &value[0]);
+        glUniform2fv(glGetUniformLocation(programID_, name.c_str()), 1, value.data());
     }
     void setVec2(const std::string &name, float x, float y) const
     {
         glUniform2f(glGetUniformLocation(programID_, name.c_str()), x, y);
     }
     // ------------------------------------------------------------------------
-    void setVec3(const std::string &name, const glm::vec3 &value) const
+    void setVec3(const std::string &name, const Eigen::Vector3f &value) const
     {
-        glUniform3fv(glGetUniformLocation(programID_, name.c_str()), 1, &value[0]);
+        glUniform3fv(glGetUniformLocation(programID_, name.c_str()), 1, value.data());
     }
     void setVec3(const std::string &name, float x, float y, float z) const
     {
         glUniform3f(glGetUniformLocation(programID_, name.c_str()), x, y, z);
     }
     // ------------------------------------------------------------------------
-    void setVec4(const std::string &name, const glm::vec4 &value) const
+    void setVec4(const std::string &name, const Eigen::Vector4f &value) const
     {
-        glUniform4fv(glGetUniformLocation(programID_, name.c_str()), 1, &value[0]);
+        glUniform4fv(glGetUniformLocation(programID_, name.c_str()), 1, value.data());
     }
     void setVec4(const std::string &name, float x, float y, float z, float w) const
     {
         glUniform4f(glGetUniformLocation(programID_, name.c_str()), x, y, z, w);
     }
     // ------------------------------------------------------------------------
-    void setMat2(const std::string &name, const glm::mat2 &mat) const
+    void setMat2(const std::string &name, const Eigen::Matrix2f &mat) const
     {
-        glUniformMatrix2fv(glGetUniformLocation(programID_, name.c_str()), 1, GL_FALSE, &mat[0][0]);
+        glUniformMatrix2fv(glGetUniformLocation(programID_, name.c_str()), 1, GL_FALSE, mat.data());
     }
     // ------------------------------------------------------------------------
-    void setMat3(const std::string &name, const glm::mat3 &mat) const
+//    void setMat3(const std::string &name, const glm::mat3 &mat) const
+//    {
+//        glUniformMatrix3fv(glGetUniformLocation(programID_, name.c_str()), 1, GL_FALSE, &mat[0][0]);
+//    }
+    void setMat3(const std::string &name, const Eigen::Matrix3f &mat) const
     {
-        glUniformMatrix3fv(glGetUniformLocation(programID_, name.c_str()), 1, GL_FALSE, &mat[0][0]);
+        glUniformMatrix3fv(glGetUniformLocation(programID_, name.c_str()), 1, GL_FALSE, mat.data());
     }
     // ------------------------------------------------------------------------
-    void setMat4(const std::string &name, const glm::mat4 &mat) const
+//    void setMat4(const std::string &name, const glm::mat4 &mat) const
+//    {
+//        glUniformMatrix4fv(glGetUniformLocation(programID_, name.c_str()), 1, GL_FALSE, &mat[0][0]);
+//    }
+    void setMat4(const std::string &name, const Eigen::Matrix4f &mat) const
     {
-        glUniformMatrix4fv(glGetUniformLocation(programID_, name.c_str()), 1, GL_FALSE, &mat[0][0]);
+        glUniformMatrix4fv(glGetUniformLocation(programID_, name.c_str()), 1, GL_FALSE, mat.data());
     }
-    */
 };
 
 #endif

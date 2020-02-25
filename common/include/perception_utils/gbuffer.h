@@ -2,7 +2,7 @@
 #define	GBUFFER_H
 
 #include <GL/glew.h>
-
+#include <memory>
 #define GBUFFER_DEPTH_TEXTURE_UNIT 0
 #define GBUFFER_POSITION_TEXTURE_UNIT 1
 
@@ -17,7 +17,8 @@ public:
 	};
 
 	GBuffer();
-
+    using Ptr = std::shared_ptr<GBuffer>;
+    using ConstPtr = std::shared_ptr<const GBuffer>;
 	~GBuffer();
 
 	bool init(unsigned int WindowWidth, unsigned int WindowHeight);

@@ -47,8 +47,8 @@ include_directories(
     ${GLEW_INCLUDE_DIRS}
     ${YAML_CPP_INCLUDE_DIRS}
     )
-
-file(GLOB sources "${CMAKE_SOURCE_DIR}/common/src/*.cpp" )
+file(GLOB sources "${CMAKE_SOURCE_DIR}/common/src/*.cpp"
+                  "${CMAKE_SOURCE_DIR}/common/src/utility/*.cpp")
 
 add_library(${PROJECT_NAME} ${sources} )
 
