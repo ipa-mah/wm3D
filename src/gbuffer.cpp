@@ -1,7 +1,7 @@
 #include <stdio.h>
 
-#include "wm3D/gl_util.h"
-#include "wm3D/gbuffer.h"
+#include "wm3D/visualization/gl_util.h"
+#include "wm3D/visualization/gbuffer.h"
 
 GBuffer::GBuffer()
 {

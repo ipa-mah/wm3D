@@ -5,10 +5,13 @@
 
 // Include GLFW
 #include <GLFW/glfw3.h>
-#include "wm3D/visualizer.hpp"
-#include "wm3D/utility/vision_utils.hpp"
 #include <eigen3/Eigen/Core>
 
+#include <pcl/io/ply_io.h>
+
+#include "wm3D/visualization/visualizer.hpp"
+#include "wm3D/utility/vision_utils.hpp"
+#include "wm3D/utility/open3d_helper.hpp"
 bool readDataFromJsonFile(const std::string& file_name, std::vector<Eigen::Matrix4d>& extrinsics,
                           Eigen::Matrix3d& intrins)
 {
@@ -75,6 +78,9 @@ int main( int argc, char** argv )
     visual->createVisualizerWindow("rendering");
     visual->bindingMesh();
     visual->render3DModel(vert_shader,frag_shader,extrinsics);
+    pcl::PolygonMesh mesh;
+    Open3DHelper::open3DMesh2PCLMesh(*mesh_ptr,mesh);
+    pcl::io::savePLYFile("mesh.ply",mesh);
     return 0;
 }
 

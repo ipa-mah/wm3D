@@ -3,9 +3,9 @@
 
 
 #include "wm3D/texture_mesh.h"
-#include "wm3D/shader.h"
+#include "wm3D/visualization/shader.h"
 #include "wm3D/utility/utils.hpp"
-#include "wm3D/gbuffer.h"
+#include "wm3D/visualization/gbuffer.h"
 
 #include <iostream>
 #include <unordered_map>

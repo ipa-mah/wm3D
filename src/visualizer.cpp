@@ -1,4 +1,4 @@
-#include "wm3D/visualizer.hpp"
+#include "wm3D/visualization/visualizer.hpp"
 
 
 std::function<void(int,int)> frame_size_call_back_ = [](int,int){};
