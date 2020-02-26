@@ -1,5 +1,5 @@
 cmake_minimum_required (VERSION 3.1)
-project(perception_utils VERSION 0.1.0 LANGUAGES CXX)
+project(wm3D VERSION 0.1.0 LANGUAGES CXX)
 
 # We need a CMAKE_DIR with some code to find external dependencies
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
@@ -37,7 +37,7 @@ include_directories(${CMAKE_SOURCE_DIR}/elibs)
 ##########
 
 include_directories(
-    common/include
+    include
     ${Boost_INCLUDE_DIRS}
     ${OpenCV_INCLUDE_DIRS}
     ${PCL_INCLUDE_DIRS}
@@ -47,8 +47,8 @@ include_directories(
     ${GLEW_INCLUDE_DIRS}
     ${YAML_CPP_INCLUDE_DIRS}
     )
-file(GLOB sources "${CMAKE_SOURCE_DIR}/common/src/*.cpp"
-                  "${CMAKE_SOURCE_DIR}/common/src/utility/*.cpp")
+file(GLOB sources "${CMAKE_SOURCE_DIR}/src/*.cpp"
+                  "${CMAKE_SOURCE_DIR}/src/utility/*.cpp")
 
 add_library(${PROJECT_NAME} ${sources} )
 
@@ -67,7 +67,7 @@ target_link_libraries(${PROJECT_NAME}
 
     )
 
-add_executable(mesh_rgbd_rendering src/mesh_rgbd_rendering.cpp)
+add_executable(mesh_rgbd_rendering test/mesh_rgbd_rendering.cpp)
 target_link_libraries(mesh_rgbd_rendering ${PROJECT_NAME})
 
 
