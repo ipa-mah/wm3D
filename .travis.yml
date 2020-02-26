@@ -1,4 +1,6 @@
 # SHARED=ON, BUILD_DEPENDENCY_FROM_SOURCE=ON
+
+language: generic # optional, just removes the language badge
 env:
     global:
         - SHARED = OFF
