@@ -4,7 +4,8 @@ project(wm3D VERSION 0.1.0 LANGUAGES CXX)
 # We need a CMAKE_DIR with some code to find external dependencies
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
 set(CMAKE_CXX_STANDARD 14)
-find_package(OpenCV REQUIRED NO_MODULE PATHS /usr/local NO_DEFAULT_PATH)
+#find_package(OpenCV REQUIRED NO_MODULE PATHS /usr/local NO_DEFAULT_PATH)
+find_package(OpenCV REQUIRED)
 MESSAGE(STATUS "OpenCV included at ${OpenCV_INCLUDE_DIRS}")
 find_package(OpenMP)
 if (OPENMP_FOUND)
@@ -70,18 +71,31 @@ target_link_libraries(${PROJECT_NAME}
 add_executable(mesh_rgbd_rendering test/mesh_rgbd_rendering.cpp)
 target_link_libraries(mesh_rgbd_rendering ${PROJECT_NAME})
 
+add_executable(opengl_test test/opengl_test.cpp)
+target_link_libraries(opengl_test ${PROJECT_NAME})
 
 
 
+# Install project files
+
+# copy directory of header files to /usr/local/include/
+install(DIRECTORY include/${PROJECT_NAME}
+    DESTINATION include
+    FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp"
+    PATTERN "*.svn" EXCLUDE)
+#copy file package.xml to /usr/local/share
+install (FILES package.xml DESTINATION share/$(PROJECT_NAME))
+# install CMake targets and config files
 
 
-#add_executable(open3d_test src/open3d_test.cpp)
-#target_link_libraries(open3d_test ${OpenCV_LIBS} ${Open3D_LIBRARIES})
 
+# uninstall target
+if (NOT TARGET uninstall)
+    configure_file("${CMAKE_CURRENT_SOURCE_DIR}/cmake/cmake_uninstall.cmake.in"
+                   "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake"
+                   IMMEDIATE @ONLY)
 
-
-#add_executable(viewer src/viewer.cc src/trackball.cc)
-#target_link_libraries(viewer ${PROJECT_NAME})
-
-
+    add_custom_target(uninstall COMMAND ${CMAKE_COMMAND} -P
+                      ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake)
+endif ()
 
