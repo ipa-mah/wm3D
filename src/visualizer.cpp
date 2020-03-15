@@ -8,11 +8,7 @@ void processInput(GLFWwindow *window)
     if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
 }
-Visualizer::Visualizer() {
-    image_width_ = 0;
-    image_height_ = 0;
 
-}
 Visualizer::~Visualizer()
 {
     glfwDestroyWindow(window_);
@@ -22,6 +18,12 @@ void Visualizer::close()
 {
     glfwSetWindowShouldClose(window_,1);
 }
+
+void Visualizer::printShaderWarning(const std::string& mes)
+{
+    PRINT_YELLOW("[{%s}] {%s} \n", shader_name_.c_str(), mes.c_str());
+}
+
 bool Visualizer::createVisualizerWindow(const std::string &window_name,
                                         const int width ,
                                         const int height,
@@ -29,11 +31,14 @@ bool Visualizer::createVisualizerWindow(const std::string &window_name,
                                         const int top,
                                         const bool visible)
 {
+
+    /*
     if (image_width_ <= 0 || image_height_ <= 0) {
-        PRINT_RED("[Visualizer] createVisualizerWindow() failed because window height and width are not set.");
+        PRINT_RED("[Visualizer] createVisualizerWindow() failed because "
+                  "window height and width are not set.\n");
         return false;
     }
-
+    */
     window_name_ = window_name;
     if (!glfwInit())
     {
@@ -45,9 +50,9 @@ bool Visualizer::createVisualizerWindow(const std::string &window_name,
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    glfwWindowHint(GLFW_VISIBLE, visible ? 1 : 0); // hide window after creation
+    // glfwWindowHint(GLFW_VISIBLE, visible ? 1 : 0); // hide window after creation
 
-    window_ = glfwCreateWindow(image_width_,image_height_,window_name_.c_str(),NULL,NULL);
+    window_ = glfwCreateWindow(width,height,window_name_.c_str(),NULL,NULL);
     if (!window_) {
         std::cerr<<"Failed to create window\n"<<std::endl;
         glfwTerminate();
@@ -66,12 +71,7 @@ bool Visualizer::createVisualizerWindow(const std::string &window_name,
         return false;
     }
 
-    // Ensure we can capture the escape key being pressed below
-    glfwSetInputMode(window_, GLFW_STICKY_KEYS, GL_TRUE);
-    // black color background
-    glClearColor(0.0f, 0.0f, 0.f, 0.0f);
-    glEnable(GL_DEPTH_TEST);
-    glDepthFunc(GL_LESS);
+
 
 
 
@@ -103,7 +103,38 @@ bool Visualizer::createVisualizerWindow(const std::string &window_name,
         }
     });
     */
+    glewExperimental = true;
+    if (glewInit() != GLEW_OK) {
+        PRINT_RED("Failed to initialize GLEW.\n");
+        glfwTerminate();
+        return false;
+    }
+    // Ensure we can capture the escape key being pressed below
+    glfwSetInputMode(window_, GLFW_STICKY_KEYS, GL_TRUE);
 
+    // Dark blue background
+    glClearColor(0.0f, 0.0f, 0.4f, 0.0f);
+    glGenVertexArrays(1, &vao_id_);
+    glBindVertexArray(vao_id_);
+
+
+   // glEnable(GL_DEPTH_TEST);
+   // glDepthFunc(GL_LESS);
+
+
+
+
+    /*
+    // pixel alignment
+    glPixelStorei(GL_PACK_ALIGNMENT, 1);
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+
+    // polygon rendering
+    glEnable(GL_CULL_FACE);
+
+    // glReadPixels always read front buffer
+    glReadBuffer(GL_FRONT);
+    */
     return true;
 }
 
@@ -291,44 +322,88 @@ bool Visualizer::bindingMesh()
 }
 
 
-bool Visualizer::render3DModel(const std::string& vert_file, const std::string& frag_file,
-                               const std::vector<Eigen::Matrix4d>& extrinsics)
+
+
+
+bool Visualizer::validateShader(GLuint shader_index)
 {
-    // // Set attributes for vertices
-    // vertex positions
-
-//    for (int mi=0; mi < num_materials_;mi++) {
-//         glEnableVertexAttribArray(vert_file);
-//        glVertexAttribPointer()
-//    }
-
-
-    Shader::Ptr shader = std::make_shared<Shader>();
-    shader->LoadShaders(vert_file.c_str(),frag_file.c_str());
-    shader->setInt("save_texture",0);
-
-    for(size_t i=0; i< extrinsics.size();i++)
-    {
-        glClear(GL_COLOR_BUFFER_BIT||GL_DEPTH_BUFFER_BIT);
-        setViewMatrices(extrinsics[i]);
-        shader->useProgram();
-        shader->setFloat("near",z_near_);
-        shader->setFloat("far",z_far_);
-        shader->setBool("flag_show_color", false);
-        shader->setBool("flag_show_texture", true);
-        setViewMatrices(extrinsics[i]);
-        shader->setMat4("transform",view_matrix_);
-        for (int mi=0; mi < num_materials_;mi++) {
-
-            glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D,diffuse_texture_buffers_[mi]);
-
+    GLint result = GL_FALSE;
+    int info_log_length;
+    glGetShaderiv(shader_index, GL_COMPILE_STATUS, &result);
+    if (result == GL_FALSE) {
+        glGetShaderiv(shader_index, GL_INFO_LOG_LENGTH, &info_log_length);
+        if (info_log_length > 0) {
+            std::vector<char> error_message(info_log_length + 1);
+            glGetShaderInfoLog(shader_index, info_log_length, NULL,
+                               &error_message[0]);
+            PRINT_RED("Shader error: {%s}", &error_message[0]);
         }
-
-
-
+        return false;
     }
+    return true;
 
+}
+bool Visualizer::validateProgram(GLuint program_index)
+{
+    GLint result = GL_FALSE;
+    int info_log_length;
+    glGetProgramiv(program_index, GL_LINK_STATUS, &result);
+    if (result == GL_FALSE) {
+        glGetProgramiv(program_index, GL_INFO_LOG_LENGTH, &info_log_length);
+        if (info_log_length > 0) {
+            std::vector<char> error_message(info_log_length + 1);
+            glGetShaderInfoLog(program_index, info_log_length, NULL,
+                               &error_message[0]);
+            PRINT_RED("Shader error: {%s}", &error_message[0]);
+        }
+        return false;
+    }
+    return true;
 }
 
 
+
+bool Visualizer::renderPCLMesh(const pcl::PolygonMesh& mesh,const Eigen::Matrix3d& intrins,
+                   const Eigen::Matrix4d& extrins)
+{
+
+    image_width_ = static_cast<int>((intrins(0,2)+0.5)*2);
+    image_height_ = static_cast<int>((intrins(1,2)+0.5)*2);
+
+    z_near_ = 0.1f;
+    z_far_ = 10.0f;
+
+    projection_matrix_.setZero();
+    projection_matrix_(0,0) = static_cast<float>(intrins(0,0)/intrins(0,2));
+    projection_matrix_(1,1) = static_cast<float>(intrins(1,1)/intrins(1,2));
+    projection_matrix_(2,2) = (z_near_ + z_far_) / (z_near_ - z_far_);
+    projection_matrix_(3,2) = -1;
+    projection_matrix_(2,3) = -2.0f * z_far_ * z_near_ / (z_far_ - z_near_);
+
+
+    look_at_matrix_.setIdentity();
+    look_at_matrix_(2,2) = -1.0f;
+    look_at_matrix_(3,3) = -1.0f;
+
+    view_matrix_.setIdentity();
+
+    setViewMatrices(extrins);
+    std::cout<<view_matrix_<<std::endl;
+   // pcl::io::loadPLYFile(data_path+"polygon_mesh.ply",mesh);
+    pcl::PointCloud<pcl::PointNormal> cloud;
+    pcl::fromPCLPointCloud2(mesh.cloud,cloud);
+    std::vector<Eigen::Vector3f> vertices;
+    for (int i=0;i<mesh.polygons.size();i++) {
+        pcl::Vertices face = mesh.polygons[i];
+        for(int j=0; j< face.vertices.size();j++)
+        {
+            pcl::PointNormal pt = cloud.points[face.vertices[j]];
+            vertices.push_back(Eigen::Vector3f(pt.x,pt.y,pt.z));
+        }
+    }
+
+
+
+
+
+}

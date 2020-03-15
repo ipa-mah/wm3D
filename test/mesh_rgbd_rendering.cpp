@@ -8,10 +8,11 @@
 #include <eigen3/Eigen/Core>
 
 #include <pcl/io/ply_io.h>
-
+#include <pcl/io/obj_io.h>
 #include "wm3D/visualization/visualizer.hpp"
 #include "wm3D/utility/vision_utils.hpp"
 #include "wm3D/utility/open3d_helper.hpp"
+#include "wm3D/visualization/render_texture_mesh.hpp"
 bool readDataFromJsonFile(const std::string& file_name, std::vector<Eigen::Matrix4d>& extrinsics,
                           Eigen::Matrix3d& intrins)
 {
@@ -49,38 +50,26 @@ bool readDataFromJsonFile(const std::string& file_name, std::vector<Eigen::Matri
         extrinsics.push_back(cam2world.matrix().inverse());
     }
 
-    std::cout<<"Virtual Intrinsics:"<<std::endl<<intrins<<std::endl;
+    std::cout<<"Artificial Intrinsics:"<<std::endl<<intrins<<std::endl;
 }
-
 int main( int argc, char** argv )
 {
 
     std::string data_path = "../sample_data/";
     std::string texture_file = data_path+"texture_model.obj";
-    std::string vert_shader = "/home/ipa-mah/1_projects/wm3D/shaders/rendermode.vert";
-    std::string frag_shader = "/home/ipa-mah/1_projects/wm3D/shaders/rendermode.frag";
+    std::string vert_shader = "/home/ipa-mah/1_projects/wm3D/src/shaders/savemode.vert";
+    std::string frag_shader = "/home/ipa-mah/1_projects/wm3D/src/shaders/savemode.frag";
 
     std::vector<Eigen::Matrix4d> extrinsics;
     Eigen::Matrix3d intrins;
 
     readDataFromJsonFile(data_path+"config.json",extrinsics,intrins);
-    Visualizer::Ptr visual = Visualizer::Ptr(new Visualizer);
-    std::shared_ptr<open3d::geometry::TriangleMesh> mesh_ptr = std::make_shared<open3d::geometry::TriangleMesh>();
-    if (open3d::io::ReadTriangleMesh(texture_file, *mesh_ptr)) {
-        open3d::utility::LogInfo("Successfully read {}", texture_file);
-    } else {
-        open3d::utility::LogWarning("Failed to read {}", texture_file);
-        return 1;
-    }
-    mesh_ptr->ComputeVertexNormals();
-    visual->readTextureMeshAndData(intrins,mesh_ptr);
-
-    visual->createVisualizerWindow("rendering");
-    visual->bindingMesh();
-    visual->render3DModel(vert_shader,frag_shader,extrinsics);
-    pcl::PolygonMesh mesh;
-    Open3DHelper::open3DMesh2PCLMesh(*mesh_ptr,mesh);
-    pcl::io::savePLYFile("mesh.ply",mesh);
+    int width = (intrins(0,2)+0.5)*2;
+    int height = (intrins(1,2)+0.5)*2;
+    std::shared_ptr<RenderTextureMesh> render =
+            std::make_shared<RenderTextureMesh>("render_texture_mesh",vert_shader,frag_shader);
+    render->CreateVisualizerWindow("wm3D",width,height,50,50,true);
+    render->compileShaders();
     return 0;
 }
 

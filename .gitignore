@@ -1,5 +1,3 @@
-# default .gitignore file for ipa320 repositories
-# master file can be found in https://github.com/ipa320/care-o-bot/blob/indigo_dev/.gitignore
 
 build/
 bin/

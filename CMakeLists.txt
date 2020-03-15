@@ -23,6 +23,9 @@ find_package(CUDA 9.0 REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(yaml-cpp)
 
+#add_library(GLAD "${CMAKE_SOURCE_DIR}/src/glad.c")
+#set(LIBS ${LIBS} GLAD)
+
 
 #Open3D
 find_package(Open3D REQUIRED)
@@ -49,7 +52,9 @@ include_directories(
     ${YAML_CPP_INCLUDE_DIRS}
     )
 file(GLOB sources "${CMAKE_SOURCE_DIR}/src/*.cpp"
-                  "${CMAKE_SOURCE_DIR}/src/utility/*.cpp")
+                  "${CMAKE_SOURCE_DIR}/src/utility/*.cpp"
+                  "${CMAKE_SOURCE_DIR}/src/visualization/*.cpp"
+                  )
 
 add_library(${PROJECT_NAME} ${sources} )
 
@@ -61,7 +66,6 @@ target_link_libraries(${PROJECT_NAME}
     ${GLFW_LIBRARIES}
     ${GLUT_LIBRARY}
     ${GLEW_LIBRARIES}
-    # tinyobjloader::tinyobjloader
     tinyobjloader
     ${Open3D_LIBRARIES}
 
@@ -71,9 +75,11 @@ target_link_libraries(${PROJECT_NAME}
 add_executable(mesh_rgbd_rendering test/mesh_rgbd_rendering.cpp)
 target_link_libraries(mesh_rgbd_rendering ${PROJECT_NAME})
 
-add_executable(opengl_test test/opengl_test.cpp)
-target_link_libraries(opengl_test ${PROJECT_NAME})
+#add_executable(opengl_test test/opengl_test.cpp)
+#target_link_libraries(opengl_test ${PROJECT_NAME})
 
+add_executable(function_test test/function_test.cpp)
+target_link_libraries(function_test ${GLEW_LIBRARIES} ${GLUT_LIBRARY} ${GLFW_LIBRARIES} ${OPENGL_LIBRARIES})
 
 
 # Install project files
