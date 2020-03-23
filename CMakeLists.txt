@@ -50,6 +50,7 @@ include_directories(
     ${GLFW_INCLUDE_DIRS}
     ${GLEW_INCLUDE_DIRS}
     ${YAML_CPP_INCLUDE_DIRS}
+    glm
     )
 file(GLOB sources "${CMAKE_SOURCE_DIR}/src/*.cpp"
                   "${CMAKE_SOURCE_DIR}/src/utility/*.cpp"
@@ -79,7 +80,8 @@ target_link_libraries(mesh_rgbd_rendering ${PROJECT_NAME})
 #target_link_libraries(opengl_test ${PROJECT_NAME})
 
 add_executable(function_test test/function_test.cpp)
-target_link_libraries(function_test ${GLEW_LIBRARIES} ${GLUT_LIBRARY} ${GLFW_LIBRARIES} ${OPENGL_LIBRARIES})
+target_link_libraries(function_test ${GLEW_LIBRARIES} ${GLUT_LIBRARY} ${Open3D_LIBRARIES}
+                        ${GLFW_LIBRARIES} ${OPENGL_LIBRARIES} ${OpenCV_LIBRARIES})
 
 
 # Install project files

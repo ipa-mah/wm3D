@@ -24,8 +24,11 @@ float LinearizeDepth(float depth)
 
 void main()
 {
+
+
 	// Output color = red 
 	//color = vec3(1,0,0);
+	/*
 	if (flag_show_color)
 	{
 		color = fragment_color; // Simply pass the color data
@@ -39,5 +42,7 @@ void main()
 		float depth = LinearizeDepth(gl_FragCoord.z) / far;
 		color = vec3(depth);
 	}	
+	*/
+	color = texture( texture_sampler, uv ).rgb; // texture color
 	depth_and_vid = vec3(gl_FragCoord.z / gl_FragCoord.w, vertex_id, 0);
 }

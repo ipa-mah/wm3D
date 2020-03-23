@@ -6,17 +6,17 @@ bool open3DMesh2TextureMesh(const open3d::geometry::TriangleMesh& open3d_mesh,Te
     mesh->vertices_.resize(open3d_mesh.vertices_.size());
     mesh->vertex_colors_.resize(open3d_mesh.vertex_colors_.size());
     // copy vertex and data
-//    for (size_t vidx = 0; vidx < open3d_mesh.vertices_.size(); vidx ++) {
+    //    for (size_t vidx = 0; vidx < open3d_mesh.vertices_.size(); vidx ++) {
 
-//        mesh.vertices_.push_back(Eigen::Vector3d(vx, vy, vz));
-//    }
+    //        mesh.vertices_.push_back(Eigen::Vector3d(vx, vy, vz));
+    //    }
 
-//    for (size_t vidx = 0; vidx < attrib.colors.size(); vidx += 3) {
-//        tinyobj::real_t r = attrib.colors[vidx + 0];
-//        tinyobj::real_t g = attrib.colors[vidx + 1];
-//        tinyobj::real_t b = attrib.colors[vidx + 2];
-//        mesh.vertex_colors_.push_back(Eigen::Vector3d(r, g, b));
-//    }
+    //    for (size_t vidx = 0; vidx < attrib.colors.size(); vidx += 3) {
+    //        tinyobj::real_t r = attrib.colors[vidx + 0];
+    //        tinyobj::real_t g = attrib.colors[vidx + 1];
+    //        tinyobj::real_t b = attrib.colors[vidx + 2];
+    //        mesh.vertex_colors_.push_back(Eigen::Vector3d(r, g, b));
+    //    }
 }
 bool textureMesh2open3DMesh(const TextureMeshPtr& mesh, open3d::geometry::TriangleMesh& open3d_mesh)
 {
@@ -41,22 +41,40 @@ bool open3DMesh2PCLMesh(const open3d::geometry::TriangleMesh& open3d_mesh,pcl::P
 
     for(std::size_t i = 0; i< open3d_mesh.vertices_.size(); i++)
     {
-       pcl::PointNormal pt;
-       pt.x = open3d_mesh.vertices_[i].cast<float>()[0];
-       pt.y = open3d_mesh.vertices_[i].cast<float>()[1];
-       pt.z = open3d_mesh.vertices_[i].cast<float>()[2];
-       pt.normal_x = open3d_mesh.vertex_normals_[i].cast<float>()[0];
-       pt.normal_y = open3d_mesh.vertex_normals_[i].cast<float>()[1];
-       pt.normal_z = open3d_mesh.vertex_normals_[i].cast<float>()[2];
-//       pt.r = open3d_mesh.vertex_colors_[i].cast<uint8_t>()[0];
-//       pt.g = open3d_mesh.vertex_colors_[i].cast<uint8_t>()[1];
-//       pt.b = open3d_mesh.vertex_colors_[i].cast<uint8_t>()[2];
-       cloud.push_back(pt);
+        pcl::PointNormal pt;
+        pt.x = open3d_mesh.vertices_[i].cast<float>()[0];
+        pt.y = open3d_mesh.vertices_[i].cast<float>()[1];
+        pt.z = open3d_mesh.vertices_[i].cast<float>()[2];
+        pt.normal_x = open3d_mesh.vertex_normals_[i].cast<float>()[0];
+        pt.normal_y = open3d_mesh.vertex_normals_[i].cast<float>()[1];
+        pt.normal_z = open3d_mesh.vertex_normals_[i].cast<float>()[2];
+        //       pt.r = open3d_mesh.vertex_colors_[i].cast<uint8_t>()[0];
+        //       pt.g = open3d_mesh.vertex_colors_[i].cast<uint8_t>()[1];
+        //       pt.b = open3d_mesh.vertex_colors_[i].cast<uint8_t>()[2];
+        cloud.push_back(pt);
     }
     pcl::toPCLPointCloud2(cloud,pcl_mesh.cloud);
 
     return true;
 }
+open3d::geometry::Image getOpen3dImage(const cv::Mat& opencv_image)
+{
+    open3d::geometry::Image open3d_image;
+    cv::Mat rgb_image;
+    cv::cvtColor(opencv_image,rgb_image,CV_BGR2RGB);
+    open3d_image.Prepare(opencv_image.cols,opencv_image.rows,opencv_image.channels(),opencv_image.elemSize1());
+    std::copy(rgb_image.datastart, rgb_image.dataend, open3d_image.data_.begin());
+    return std::move(open3d_image);
+}
+
+cv::Mat getOpenCVImage(const open3d::geometry::Image& open3d_image)
+{
+    cv::Mat opencv_image(open3d_image.height_,open3d_image.width_,open3d_image.bytes_per_channel_);
+    //std::copy(open3d_image.data_.begin(),open3d_image.data_.end(),opencv_image.datastart);
+
+    return std::move(opencv_image);
+}
+
 
 }
 

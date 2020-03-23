@@ -15,8 +15,8 @@ namespace  Open3DHelper
 {
 bool open3DMesh2TextureMesh(const open3d::geometry::TriangleMesh& open3d_mesh,TextureMeshPtr& mesh);
 bool open3DMesh2PCLMesh(const open3d::geometry::TriangleMesh& open3d_mesh,pcl::PolygonMesh& pcl_mesh);
-
-
+open3d::geometry::Image getOpen3dImage(const cv::Mat& opencv_image);
+cv::Mat getOpenCVImage(const open3d::geometry::Image& open3d_image);
 }
 
 

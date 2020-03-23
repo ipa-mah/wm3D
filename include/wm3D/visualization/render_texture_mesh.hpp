@@ -6,8 +6,9 @@
 #include <GL/glew.h>
 #include <eigen3/Eigen/Core>
 #include <Open3D/Open3D.h>
-
 #include "wm3D/utility/utils.hpp"
+
+
 class RenderMesh : public open3d::visualization::glsl::ShaderWrapper
 {
 public:
@@ -59,6 +60,8 @@ protected:
                                 std::vector<Eigen::Vector2f> &uvs) = 0;
 
 protected:
+
+
     GLuint vertex_position_; //name of vertex position in gsls shader
     GLuint vertex_uv_; // name of uv position in gsls fragment shader
     GLuint texture_;
@@ -66,6 +69,8 @@ protected:
     int num_materials_; // number of texture images
     std::vector<int> array_offsets_; //??
     std::vector<GLsizei> draw_array_sizes_;
+
+    GLuint vao_id_;
 
     std::vector<GLuint> vertex_position_buffers_;
     std::vector<GLuint> vertex_uv_buffers_;
@@ -93,6 +98,8 @@ public:
                       const std::string &render_texture_mesh_fragment_shader_file):
         RenderMesh (name,render_texture_mesh_vertex_shader_file,render_texture_mesh_fragment_shader_file)
     {}
+    void readTextureMesh(const std::shared_ptr<open3d::geometry::TriangleMesh>& texture_mesh);
+    void rendering(const Eigen::Matrix3d& intrins,const Eigen::Matrix4d& extrinsics);
 protected:
     bool prepareRendering(const open3d::geometry::Geometry &geometry,
                           const open3d::visualization::RenderOption &option,

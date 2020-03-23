@@ -57,8 +57,8 @@ int main( int argc, char** argv )
 
     std::string data_path = "../sample_data/";
     std::string texture_file = data_path+"texture_model.obj";
-    std::string vert_shader = "/home/ipa-mah/1_projects/wm3D/src/shaders/savemode.vert";
-    std::string frag_shader = "/home/ipa-mah/1_projects/wm3D/src/shaders/savemode.frag";
+    std::string vert_shader = "/home/ipa-mah/1_projects/wm3D/src/shaders/TextureSimpleVertexShader.glsl";
+    std::string frag_shader = "/home/ipa-mah/1_projects/wm3D/src/shaders/TextureSimpleFragmentShader.glsl";
 
     std::vector<Eigen::Matrix4d> extrinsics;
     Eigen::Matrix3d intrins;
@@ -66,10 +66,18 @@ int main( int argc, char** argv )
     readDataFromJsonFile(data_path+"config.json",extrinsics,intrins);
     int width = (intrins(0,2)+0.5)*2;
     int height = (intrins(1,2)+0.5)*2;
+
+    std::shared_ptr<open3d::geometry::TriangleMesh> mesh = std::make_shared<open3d::geometry::TriangleMesh>();
+    open3d::io::ReadTriangleMesh(data_path+"texture_model.obj",*mesh);
+
     std::shared_ptr<RenderTextureMesh> render =
             std::make_shared<RenderTextureMesh>("render_texture_mesh",vert_shader,frag_shader);
     render->CreateVisualizerWindow("wm3D",width,height,50,50,true);
     render->compileShaders();
+
+
+    render->readTextureMesh(mesh);
+    render->rendering(intrins,extrinsics[0]);
     return 0;
 }
 
