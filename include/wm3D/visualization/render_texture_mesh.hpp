@@ -3,20 +3,23 @@
 #include <iostream>
 #include <fstream>
 #include <memory>
+// Include GLEW
 #include <GL/glew.h>
+
+// Include GLFW
+#include <GLFW/glfw3.h>
+
 #include <eigen3/Eigen/Core>
-#include <Open3D/Open3D.h>
-#include "wm3D/utility/utils.hpp"
-
-
-class RenderMesh : public open3d::visualization::glsl::ShaderWrapper
+#include <wm3D/utility/utils.hpp>
+#include <wm3D/visualization/shader.h>
+#include <wm3D/texture_mesh.h>
+class RenderMesh
 {
 public:
-    ~RenderMesh() override { Release(); }
+    virtual ~RenderMesh(){}
     RenderMesh(const std::string &name,
                const std::string &render_texture_mesh_vertex_shader_file,
                const std::string &render_texture_mesh_fragment_shader_file):
-        ShaderWrapper(name),
         render_texture_mesh_vertex_shader_file_(render_texture_mesh_vertex_shader_file),
         render_texture_mesh_fragment_shader_file_(render_texture_mesh_fragment_shader_file)
     {
@@ -39,25 +42,17 @@ public:
         Compile();
     }
 protected:
-    bool Compile() final;
-    void Release() final;
-    bool BindGeometry(const open3d::geometry::Geometry &geometry,
-                      const open3d::visualization::RenderOption &option,
-                      const open3d::visualization::ViewControl &view) final;
-    bool RenderGeometry(const open3d::geometry::Geometry &geometry,
-                        const open3d::visualization::RenderOption &option,
-                        const open3d::visualization::ViewControl &view) final;
-    void UnbindGeometry() final;
+    bool Compile();
+    void Release();
+    bool BindGeometry(const TriangleMesh::Ptr &mesh);
+    bool RenderGeometry(const TriangleMesh::Ptr &mesh);
+    void UnbindGeometry();
 
 protected:
-    virtual bool prepareRendering(const open3d::geometry::Geometry &geometry,
-                                  const open3d::visualization::RenderOption &option,
-                                  const open3d::visualization::ViewControl &view) = 0;
-    virtual bool prepareBinding(const open3d::geometry::Geometry &geometry,
-                                const open3d::visualization::RenderOption &option,
-                                const open3d::visualization::ViewControl &view,
+    bool prepareRendering(const TriangleMesh::Ptr &mesh);
+    bool prepareBinding(const TriangleMesh::Ptr &mesh,
                                 std::vector<Eigen::Vector3f> &points,
-                                std::vector<Eigen::Vector2f> &uvs) = 0;
+                                std::vector<Eigen::Vector2f> &uvs);
 
 protected:
 
@@ -86,6 +81,7 @@ protected:
     // window
     GLFWwindow *window_ = NULL;
     std::string window_name_ = "wm3D";
+    bool bound_;
 };
 
 
@@ -98,16 +94,11 @@ public:
                       const std::string &render_texture_mesh_fragment_shader_file):
         RenderMesh (name,render_texture_mesh_vertex_shader_file,render_texture_mesh_fragment_shader_file)
     {}
-    void readTextureMesh(const std::shared_ptr<open3d::geometry::TriangleMesh>& texture_mesh);
-    void rendering(const Eigen::Matrix3d& intrins,const Eigen::Matrix4d& extrinsics);
+    void readTextureMesh(const TriangleMesh::Ptr& texture_mesh);
+    void rendering(const Eigen::Matrix3d& intrins,
+                   const Eigen::Matrix4d& extrinsics,
+                   cv::Mat& rendered_image);
 protected:
-    bool prepareRendering(const open3d::geometry::Geometry &geometry,
-                          const open3d::visualization::RenderOption &option,
-                          const open3d::visualization::ViewControl &view) final;
-    bool prepareBinding(const open3d::geometry::Geometry &geometry,
-                        const open3d::visualization::RenderOption &option,
-                        const open3d::visualization::ViewControl &view,
-                        std::vector<Eigen::Vector3f> &points,
-                        std::vector<Eigen::Vector2f> &uvs) final;
+
 
 };

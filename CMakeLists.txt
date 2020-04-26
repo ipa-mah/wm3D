@@ -17,21 +17,15 @@ endif()
 find_package(Boost REQUIRED)
 find_package(GLEW REQUIRED)
 find_package(PCL REQUIRED)
+link_directories(${PCL_LIBRARY_DIRS})
+add_definitions(${PCL_DEFINITIONS})
 find_package(OpenGL REQUIRED)
 find_package(GLFW3 REQUIRED)
 find_package(CUDA 9.0 REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(yaml-cpp)
+find_package(jsoncpp REQUIRED)
 
-#add_library(GLAD "${CMAKE_SOURCE_DIR}/src/glad.c")
-#set(LIBS ${LIBS} GLAD)
-
-
-#Open3D
-find_package(Open3D REQUIRED)
-link_directories(${Open3D_LIBRARY_DIRS})
-include_directories(${Open3D_INCLUDE_DIRS} )
-#MESSAGE(STATUS "Open3D included at ${Open3D_INCLUDE_DIRS}")
 
 # tinyobjectloader
 include(ExternalProject)
@@ -43,24 +37,27 @@ include_directories(${CMAKE_SOURCE_DIR}/elibs)
 include_directories(
     include
     ${Boost_INCLUDE_DIRS}
-    ${OpenCV_INCLUDE_DIRS}
+    ${OpenCV_INCLUDE_DIRS} 
+    ${Eigen3_INCLUDE_DIRS}
     ${PCL_INCLUDE_DIRS}
     ${OPENGL_INCLUDE_DIRS}
     ${GLUT_INCLUDE_DIRS}
     ${GLFW_INCLUDE_DIRS}
     ${GLEW_INCLUDE_DIRS}
     ${YAML_CPP_INCLUDE_DIRS}
-    glm
+    ${jsoncpp_INCLUDE_DIR}
+
     )
 file(GLOB sources "${CMAKE_SOURCE_DIR}/src/*.cpp"
-                  "${CMAKE_SOURCE_DIR}/src/utility/*.cpp"
-                  "${CMAKE_SOURCE_DIR}/src/visualization/*.cpp"
-                  )
+    "${CMAKE_SOURCE_DIR}/src/utility/*.cpp"
+    "${CMAKE_SOURCE_DIR}/src/visualization/*.cpp"
+    )
 
 add_library(${PROJECT_NAME} ${sources} )
 
-target_link_libraries(${PROJECT_NAME}
-    ${Boost_LIBS}
+target_link_libraries(
+    ${PROJECT_NAME}
+    ${Boost_LIBRARIES}
     ${OpenCV_LIBS}
     ${OPENGL_LIBRARIES}
     ${PCL_LIBRARIES}
@@ -68,20 +65,19 @@ target_link_libraries(${PROJECT_NAME}
     ${GLUT_LIBRARY}
     ${GLEW_LIBRARIES}
     tinyobjloader
-    ${Open3D_LIBRARIES}
-
-
+    ${jsoncpp_LIBRARIES}
+    ${YAML_CPP_LIBRARIES}
     )
 
 add_executable(mesh_rgbd_rendering test/mesh_rgbd_rendering.cpp)
 target_link_libraries(mesh_rgbd_rendering ${PROJECT_NAME})
 
+
 #add_executable(opengl_test test/opengl_test.cpp)
 #target_link_libraries(opengl_test ${PROJECT_NAME})
-
+#
 add_executable(function_test test/function_test.cpp)
-target_link_libraries(function_test ${GLEW_LIBRARIES} ${GLUT_LIBRARY} ${Open3D_LIBRARIES}
-                        ${GLFW_LIBRARIES} ${OPENGL_LIBRARIES} ${OpenCV_LIBRARIES})
+target_link_libraries(function_test ${PROJECT_NAME})
 
 
 # Install project files
@@ -100,10 +96,10 @@ install (FILES package.xml DESTINATION share/$(PROJECT_NAME))
 # uninstall target
 if (NOT TARGET uninstall)
     configure_file("${CMAKE_CURRENT_SOURCE_DIR}/cmake/cmake_uninstall.cmake.in"
-                   "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake"
-                   IMMEDIATE @ONLY)
+        "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake"
+        IMMEDIATE @ONLY)
 
     add_custom_target(uninstall COMMAND ${CMAKE_COMMAND} -P
-                      ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake)
+        ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake)
 endif ()
 

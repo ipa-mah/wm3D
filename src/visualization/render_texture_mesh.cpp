@@ -1,63 +1,14 @@
 #include "wm3D/visualization/render_texture_mesh.hpp"
 #include <Open3D/Visualization/Shader/Shader.h>
-bool RenderMesh::Compile(){
 
-    if (CompileShaders(vertex_shader_code_.c_str(), NULL,
-                       fragment_shader_code_.c_str()) == false) {
-        PrintShaderWarning("Compiling shaders failed.");
-        return false;
-    }
-
-    vertex_position_ = glGetAttribLocation(program_,"vertex_position");
-    vertex_uv_ = glGetAttribLocation(program_,"vertex_uv");
-    MVP_ = glGetUniformLocation(program_,"MVP");
-    texture_ = glGetUniformLocation(program_,"diffuse_texture");
-    return true;
-}
-
-bool RenderMesh::loadShaders()
-{
-    std::ifstream vertex_shader_stream(render_texture_mesh_vertex_shader_file_, std::ios::in);
-    if(vertex_shader_stream.is_open())
-    {
-        std::string line = "";
-        while (std::getline(vertex_shader_stream, line))
-            vertex_shader_code_ += "\n" + line;
-        vertex_shader_stream.close();
-    }
-    else
-    {
-        PRINT_RED("Impossible to open %s. Are you in the right directory ? !\n"
-                  , render_texture_mesh_vertex_shader_file_.c_str());
-        getchar();
-        return false;
-    }
-
-
-    std::ifstream fragment_shader_stream(render_texture_mesh_fragment_shader_file_, std::ios::in);
-    if(fragment_shader_stream.is_open())
-    {
-        std::string line = "";
-        while (std::getline(fragment_shader_stream, line))
-            fragment_shader_code_ += "\n" + line;
-        fragment_shader_stream.close();
-    }
-    else
-    {
-        PRINT_RED("Impossible to open %s. Are you in the right directory ? !\n"
-                  , render_texture_mesh_fragment_shader_file_.c_str());
-        getchar();
-        return false;
-    }
-
-    return true;
-}
-
+/*
 
 bool RenderMesh::CreateVisualizerWindow( const std::string &window_name,
                                          const int width, const int height,
                                          const int left, const int top, const bool visible)
 {
+
+
 
     window_name_ = window_name;
     if (window_) {  // window already created
@@ -105,6 +56,9 @@ bool RenderMesh::CreateVisualizerWindow( const std::string &window_name,
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 
 
+    glEnable(GL_DEPTH_TEST);
+    // Accept fragment if it closer to the camera than the former one
+    glDepthFunc(GL_LESS);
     return true;
 
 }
@@ -118,6 +72,10 @@ bool RenderMesh::BindGeometry(const open3d::geometry::Geometry &geometry,
                               const open3d::visualization::RenderOption &option,
                               const open3d::visualization::ViewControl &view)
 {
+
+
+
+
     UnbindGeometry();
     std::vector<Eigen::Vector3f> points;
     std::vector<Eigen::Vector2f> uvs;
@@ -151,7 +109,7 @@ bool RenderMesh::RenderGeometry(const open3d::geometry::Geometry &geometry,
 
     if(prepareRendering(geometry,option,view) == false)
     {
-        PrintShaderWarning("Rendering failed during preparation.");
+        PRINT_YELLOW("Rendering failed during preparation.");
         return false;
     }
 
@@ -179,13 +137,13 @@ void RenderMesh::UnbindGeometry()
         draw_array_sizes_.clear();
         array_offsets_.clear();
         num_materials_ = 0;
-        bound_ = false;
+
     }
 };
 
 void RenderMesh::Release() {
     UnbindGeometry();
-    ReleaseProgram();
+
 }
 
 
@@ -203,17 +161,16 @@ void RenderTextureMesh::readTextureMesh(const std::shared_ptr<open3d::geometry::
 
 }
 
-void RenderTextureMesh::rendering(const Eigen::Matrix3d& intrins,const Eigen::Matrix4d& extrinsics)
+void RenderTextureMesh::rendering(const Eigen::Matrix3d& intrins,const Eigen::Matrix4d& extrinsics,cv::Mat& rendered_image)
 {
 
 
 
 
     // Get a handle for our "MVP" uniform
-    open3d::visualization::GLHelper::GLMatrix4f projection_matrix;
-    open3d::visualization::GLHelper::GLMatrix4f look_at_matrix;
-    open3d::visualization::GLHelper::GLMatrix4f view_matrix;
-
+    GLMatrix4f projection_matrix;
+    GLMatrix4f look_at_matrix;
+    GLMatrix4f view_matrix;
 
     float z_near = 0.1f;
     float z_far = 10.0f;
@@ -235,7 +192,6 @@ void RenderTextureMesh::rendering(const Eigen::Matrix3d& intrins,const Eigen::Ma
     gl_trans_scale.setIdentity();
     view_matrix = projection_matrix * look_at_matrix *
             gl_trans_scale * extrinsics.cast<GLfloat>();
-
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glUseProgram(program_);
@@ -266,21 +222,20 @@ void RenderTextureMesh::rendering(const Eigen::Matrix3d& intrins,const Eigen::Ma
         glBindTexture(GL_TEXTURE_2D, 0);
     }
     // snippet of code to save color image
-    /*
+
     glFinish();
     //glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
     //glReadBuffer(GL_COLOR_ATTACHMENT0 );
     //std::cout<<GBUFFER_TEXTURE_TYPE_COLOR<<std::endl;
     //std::cout<<GL_COLOR_ATTACHMENT0<<std::endl;
 
-    cv::Mat mat(image_height, image_width, CV_8UC3);
-    glPixelStorei(GL_PACK_ALIGNMENT, (mat.step & 3) ? 1 : 4);
-    glPixelStorei(GL_PACK_ROW_LENGTH, mat.step/mat.elemSize());
-    glReadPixels(0, 0, mat.cols, mat.rows, GL_BGR, GL_UNSIGNED_BYTE, mat.data);
+    rendered_image = cv::Mat(image_height, image_width, CV_8UC3);
+    glPixelStorei(GL_PACK_ALIGNMENT, (rendered_image.step & 3) ? 1 : 4);
+    glPixelStorei(GL_PACK_ROW_LENGTH, rendered_image.step/rendered_image.elemSize());
+    glReadPixels(0, 0, rendered_image.cols, rendered_image.rows, GL_BGR, GL_UNSIGNED_BYTE, rendered_image.data);
 
-    cv::flip(mat, mat, 0);
-    cv::imwrite("color.png",mat);
-    */
+    cv::flip(rendered_image, rendered_image, 0);
+
 
 
 
@@ -338,6 +293,7 @@ bool RenderTextureMesh::prepareBinding(const open3d::geometry::Geometry &geometr
 
 
     //Bind vertex and uv per material
+
 
     for(std::size_t i = 0 ; i < mesh.triangles_.size(); i++) {
         const Eigen::Vector3i& triangle = mesh.triangles_[i];
@@ -410,3 +366,4 @@ bool RenderTextureMesh::prepareBinding(const open3d::geometry::Geometry &geometr
     return true;
 
 }
+*/
