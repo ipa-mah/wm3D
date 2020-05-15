@@ -1,5 +1,4 @@
 #include "wm3D/visualization/render_texture_mesh.hpp"
-#include <Open3D/Visualization/Shader/Shader.h>
 
 /*
 

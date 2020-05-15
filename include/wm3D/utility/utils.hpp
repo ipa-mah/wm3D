@@ -258,48 +258,62 @@ static void readLabelFromFile(const std::string& label_file, std::vector<int>& f
 }
 
 
+static void readIntrinsicsAndNumViews(const std::string data_path,
+                                      Eigen::Matrix3d& cam_params,
+                                      int& num_views,
+                                      int& image_width,
+                                      int& image_height)
+{
+  std::string cam_file = data_path + "/texture_images/texture_camera.txt";
+  std::cout << "read camera parameters" << std::endl;
+  float val[9];
+  std::ifstream fs;
+  fs.open(cam_file.c_str());
+  for (int i = 0; i < 9; i++)
+  {
+    fs >> val[i];
+  }
+  cam_params.focal_x = val[0];
+  cam_params.c_x = val[2];
+  cam_params.focal_y = val[4];
+  cam_params.c_y = val[5];
 
-//static void createMveScene(const std::string& output_path, const std::vector<cv::Mat> & image_data_vec,
-//                           const std::vector<int>& pose_flags,const std::vector<Eigen::Matrix4d>& transforms,const CameraParameters& cam_params)
-//{
-//    boost::filesystem::remove_all(output_path+"scene");
-//    std::string path=output_path+"scene/views";
-//    int index=0;
+  // std::copy(coeffs,coeffs+5,color_cam_params.coeffs);
+  fs >> cam_params.image_width;
+  fs >> cam_params.image_height;
 
-//    for(int j=0;j<image_data_vec.size();j++)
-//    {
-//        if (pose_flags[j]!=1) continue;
-//        std::stringstream ss;
-//        ss<<index++;
-//        std::string view_dir=path+"/view"+ss.str()+".mve";
-//        boost::filesystem::create_directories(view_dir);
-//        cv::imwrite(view_dir+"/original.png",image_data_vec[j]);
-//        Eigen::Matrix4d transf=transforms[j].inverse();
-//        std::ofstream fs;
-//        fs.open (view_dir+"/meta.ini");
-//        fs<<"[camera]\n";
-//        float focal_length=cam_params.focal_x/cam_params.image_width;
-//        fs<<"focal_length = "<<focal_length<<std::endl;
-//        fs<<"pixel_aspect = 1"<<std::endl;
-//        float px=cam_params.c_x/cam_params.image_width;
-//        float py=cam_params.c_y/cam_params.image_height;
-//        fs<<"principal_point = "<<px<<" "<<py<<std::endl;
-//        fs<<"radial_distortion = 0 0\n";
-//        fs<<"rotation = ";
-//        for (int r=0;r<3;r++)
-//            for (int c=0;c<3;c++)
-//                fs<<transf(r,c)<<" ";
-//        fs<<std::endl;
-//        fs<<"translation = "<<transf(0,3)<<" "<<transf(1,3)<<" "<<transf(2,3)<<std::endl;
+  cam_params.printInfo();
+  std::string info_file = data_path + "/texture_images/info.txt";
+  std::string line;
+  std::ifstream file(info_file.c_str());
+  int num_images = 0;
+  // read info.txt file to get number of texture images
+  if (file.is_open())
+  {
+    while (file.good())
+    {
+      std::getline(file, line);
+      std::istringstream iss(line);
+      iss >> num_images;
+    }
+  }
+  std::cout << "number of texture images: " << num_images << std::endl;
 
-//        fs<<"\n[view]\n";
-//        fs<<"id = "<<index<<std::endl;
-//        fs<<"name = color-"<<index<<std::endl;
+  for (int i = 0; i < num_images; i++)
+  {
+    std::ostringstream ss;
+    ss << std::setw(2) << std::setfill('0') << i;
+    cv::Mat img = cv::imread(data_path + "/texture_images/" + h_color_suffix + ss.str() + ".png");
+    if (img.empty())
+    {
+      printf("Utilities::readTextureImages: texture image is empty");
+      std::exit(EXIT_FAILURE);
+    }
+    images.push_back(img);
+  }
+  printf("Utilities::readTextureImages: Load %ld images", images.size());
+}
 
-//        fs.close();
-//    }
-//    //run: ./texrecon ../../../../catkin_ws/volkorn/mveScene/scene::"original" ../../../../catkin_ws/volkorn/polygon_mesh.ply original
-//}
 
 };
 

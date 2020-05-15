@@ -15,17 +15,33 @@ if (OPENMP_FOUND)
     set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
 endif()
 find_package(Boost REQUIRED)
+find_package(CUDA 9.0 REQUIRED)
+CUDA_SELECT_NVCC_ARCH_FLAGS(ARCH_FLAGS Auto)
+LIST(APPEND CUDA_NVCC_FLAGS ${ARCH_FLAGS})
+list(APPEND CUDA_NVCC_FLAGS "--compiler-options -fPIC")
+message("ARCH_FLAGS = ${ARCH_FLAGS}")
+
+
 find_package(GLEW REQUIRED)
 find_package(PCL REQUIRED)
 link_directories(${PCL_LIBRARY_DIRS})
 add_definitions(${PCL_DEFINITIONS})
 find_package(OpenGL REQUIRED)
 find_package(GLFW3 REQUIRED)
-find_package(CUDA 9.0 REQUIRED)
-find_package(Eigen3 REQUIRED)
-find_package(yaml-cpp)
-find_package(jsoncpp REQUIRED)
 
+find_package(Eigen3 REQUIRED)
+find_package(realsense2 REQUIRED )
+#Open3D
+
+find_package(Open3D HINTS ${CMAKE_INSTALL_PREFIX}/lib/CMake)
+list(APPEND Open3D_LIBRARIES dl)
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${Open3D_C_FLAGS}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${Open3D_CXX_FLAGS}")
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${Open3D_EXE_LINKER_FLAGS}")
+
+message(STATUS "Found Open3D ${Open3D_VERSION}")
+# link_directories must be before add_executable
+link_directories(${Open3D_LIBRARY_DIRS})
 
 # tinyobjectloader
 include(ExternalProject)
@@ -37,36 +53,40 @@ include_directories(${CMAKE_SOURCE_DIR}/elibs)
 include_directories(
     include
     ${Boost_INCLUDE_DIRS}
+    ${CUDA_INCLUDE_DIRS}
     ${OpenCV_INCLUDE_DIRS} 
+    ${Open3D_INCLUDE_DIRS}
     ${Eigen3_INCLUDE_DIRS}
     ${PCL_INCLUDE_DIRS}
     ${OPENGL_INCLUDE_DIRS}
     ${GLUT_INCLUDE_DIRS}
     ${GLFW_INCLUDE_DIRS}
     ${GLEW_INCLUDE_DIRS}
-    ${YAML_CPP_INCLUDE_DIRS}
-    ${jsoncpp_INCLUDE_DIR}
+    ${realsense_INCLUDE_DIR}
 
     )
-file(GLOB sources "${CMAKE_SOURCE_DIR}/src/*.cpp"
+file(GLOB sources
+    "${CMAKE_SOURCE_DIR}/src/cuda/*.cu"
+    "${CMAKE_SOURCE_DIR}/src/*.cpp"
     "${CMAKE_SOURCE_DIR}/src/utility/*.cpp"
     "${CMAKE_SOURCE_DIR}/src/visualization/*.cpp"
     )
 
-add_library(${PROJECT_NAME} ${sources} )
+cuda_add_library(${PROJECT_NAME} ${sources} )
 
 target_link_libraries(
     ${PROJECT_NAME}
     ${Boost_LIBRARIES}
+    ${CUDA_LIBRARIES}
     ${OpenCV_LIBS}
+    ${Open3D_LIBRARIES}
     ${OPENGL_LIBRARIES}
     ${PCL_LIBRARIES}
     ${GLFW_LIBRARIES}
     ${GLUT_LIBRARY}
     ${GLEW_LIBRARIES}
     tinyobjloader
-    ${jsoncpp_LIBRARIES}
-    ${YAML_CPP_LIBRARIES}
+    ${realsense2_LIBRARIES}
     )
 
 add_executable(mesh_rgbd_rendering test/mesh_rgbd_rendering.cpp)

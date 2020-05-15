@@ -25,7 +25,7 @@ ViewControl::ViewControl(const Eigen::Matrix3d& intrins, const int vertical_view
             double y = oxy* cos(horizontal_rad);
 
 
-            Eigen::Matrix3d rot;
+
             Eigen::Vector3d eye = Eigen::Vector3d(x,y,z); // camera position
             for (int v=0;v<3;v++)
                 if(std::fabs(eye[v])<0.00001) eye[v] = 0;
@@ -49,6 +49,7 @@ ViewControl::ViewControl(const Eigen::Matrix3d& intrins, const int vertical_view
                 std::cout<<"extrinsic : "<<std::endl<<extrinsic<<std::endl;
                 continue;
             }
+
         }
     // Get field of view
     int height = (int)2.0 * (intrinsic_(1,2)+0.5);
