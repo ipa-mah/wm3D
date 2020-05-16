@@ -4,7 +4,7 @@
  *****************************************************************
  *
  * @note Copyright (c) 2019 Fraunhofer Institute for Manufacturing Engineering and Automation (IPA)
- * @note Project name: ipa_object_modeling
+ * @note Project name: 
  * @author Author: Manh Ha Hoang
  *
  * @date Date of creation: 02.2019
@@ -34,6 +34,8 @@ inline void __cudaSafeCall(cudaError err, const char* file, const int line)
 #endif
 	return;
 }
+// tsdf volume
+void clearVolume(TsdfVolume volume);
 
 void createRenderMap(const DeviceArray2D<float3>& normals, DeviceArray2D<uchar3>& render_image);
 void createVMap(const DeviceArray2D<unsigned short>& depth_map, DeviceArray2D<float3>& vertex_map, const CameraParameters& cam_params, const float depth_cutoff = 5.0f,
@@ -44,5 +46,10 @@ void computeFaceNormal(const DeviceArray<float3>& vertices);
 void createDepthBoundaryMask(const DeviceArray2D<unsigned short>& src, DeviceArray2D<short>& dx, DeviceArray2D<short>& dy, DeviceArray2D<uchar>& mask_map, const float depth_threshold);
 void hostMaskImage(const DeviceArray2D<float>& sobel_dx, const DeviceArray2D<float>& sobel_dy, DeviceArray2D<uchar>& mask_map, const float depth_threshold);
 
+
+__device__ __forceinline__ short2 pack_tsdf(float tsdf, int weight);
+
+__device__ __forceinline__ float unpack_tsdf(short2 value, int& weight);
+__device__ __forceinline__ float unpack_tsdf(short2 value);
 
 }  // namespace Gpu

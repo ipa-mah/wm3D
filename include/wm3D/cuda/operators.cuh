@@ -34,9 +34,12 @@
  *  Author: Anatoly Baskeheev, Itseez Ltd, (myname.mysurname@mycompany.com)
  */
 
-#ifndef VECTOR_MATH_CUH_
-#define VECTOR_MATH_CUH_
+ #pragma once 
+
 #include "wm3D/cuda/data_types.cuh"
+
+#define DIVISOR 32767
+
 #define COMPOUND_VEC3_OP(type, scalar, op)                                          \
 	__device__ __host__ __forceinline__ type& operator op(type& v1, const type& v2) \
 	{                                                                               \
@@ -63,6 +66,8 @@ COMPOUND_VEC3_OP(short3, short, -=)
 COMPOUND_VEC3_OP(int3, int, +=)
 
 #undef COMPOUND_VEC3_OP
+
+static inline int divUp(int total, int grain) { return (total + grain - 1) / grain; }
 
 __device__ __host__ __forceinline__ float dot(const float3& v1, const float3& v2)
 {
@@ -129,6 +134,22 @@ __device__ __forceinline__ float3 operator*(const mat33& m, const float3& vec)
 }
 
 // tsdf computation
+__device__ __forceinline__ short2* TsdfVolume::operator()(int x, int y, int z)
+{
+	return data + x + y * dims.x + z * dims.y * dims.x;
+}
+__device__ __forceinline__ const short2* TsdfVolume::operator()(int x, int y, int z) const 
+{
+	return data + x + y * dims.x + z * dims.y * dims.x;
+}
+__device__ __forceinline__ short2* TsdfVolume::beg(int x, int y) const
+{
+	return data + x + dims.x * y;
+}
+__device__ __forceinline__ short2* TsdfVolume::zstep(short2 *const ptr) const
+{
+	return ptr + dims.x * dims.y;
+}
 
 __device__ __forceinline__ void clear_voxel(uchar4& value)
 {
@@ -142,15 +163,26 @@ __device__ __forceinline__ void clear_voxel(short& value)
 {
 	value = max(-DIVISOR, min(DIVISOR, __float2int_rz(0 * DIVISOR)));
 }
+////
 
-__device__ __forceinline__ void pack_tsdf(float tsdf, short& value)
+
+
+__device__ __forceinline__ short2 Gpu::pack_tsdf(float tsdf, int weight)
 {
-	value = max(-DIVISOR, min(DIVISOR, __float2int_rz(tsdf * DIVISOR)));
+	int fixedp = max (-DIVISOR, min (DIVISOR, __float2int_rz (tsdf * DIVISOR)));
+	return make_short2 (fixedp, weight);
 }
 
-__device__ __forceinline__ float unpack_tsdf(short value)
+
+__device__ __forceinline__ float Gpu::unpack_tsdf(short2 value, int& weight)
 {
-	return static_cast<float>(value) / DIVISOR;  //*/ * INV_DIV;
+	weight = value.y;
+  	return __int2float_rn (value.x) / DIVISOR;
+}
+
+__device__ __forceinline__ float Gpu::unpack_tsdf(short2 value)
+{
+	return static_cast<float>(value.x) / DIVISOR;
 }
 
 template <class T>
@@ -161,4 +193,3 @@ __device__ __host__ __forceinline__ void swap(T& a, T& b)
 	b = c;
 }
 
-#endif /* VECTOR_MATH_CUH_ */

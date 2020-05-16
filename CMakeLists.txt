@@ -21,7 +21,6 @@ LIST(APPEND CUDA_NVCC_FLAGS ${ARCH_FLAGS})
 list(APPEND CUDA_NVCC_FLAGS "--compiler-options -fPIC")
 message("ARCH_FLAGS = ${ARCH_FLAGS}")
 
-
 find_package(GLEW REQUIRED)
 find_package(PCL REQUIRED)
 link_directories(${PCL_LIBRARY_DIRS})
@@ -71,7 +70,6 @@ file(GLOB sources
     "${CMAKE_SOURCE_DIR}/src/utility/*.cpp"
     "${CMAKE_SOURCE_DIR}/src/visualization/*.cpp"
     )
-
 cuda_add_library(${PROJECT_NAME} ${sources} )
 
 target_link_libraries(
