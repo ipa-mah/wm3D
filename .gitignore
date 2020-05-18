@@ -3,7 +3,7 @@ build/
 bin/
 lib/
 # vscode
-.vscode
+.vscode/
 # generated docs
 *.dox
 *.wikidoc
