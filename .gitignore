@@ -2,7 +2,8 @@
 build/
 bin/
 lib/
-
+# vscode
+.vscode
 # generated docs
 *.dox
 *.wikidoc
@@ -36,7 +37,6 @@ qtcreator-*
 *LOCAL*
 *REMOTE*
 
-# vscode
-*.vscode
+
 # Catkin custom files
 CATKIN_IGNORE
