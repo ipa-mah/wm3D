@@ -162,8 +162,9 @@ typedef struct {
   real_t origin_offset[3];  // -o u [v [w]] (default 0 0 0)
   real_t scale[3];          // -s u [v [w]] (default 1 1 1)
   real_t turbulence[3];     // -t u [v [w]] (default 0 0 0)
-  int   texture_resolution; // -texres resolution (No default value in the spec. We'll use -1)
-  bool clamp;    // -clamp (default false)
+  int texture_resolution;   // -texres resolution (No default value in the spec.
+                            // We'll use -1)
+  bool clamp;               // -clamp (default false)
   char imfchan;  // -imfchan (the default for bump is 'l' and for decal is 'm')
   bool blendu;   // -blendu (default on)
   bool blendv;   // -blendv (default on)
@@ -1917,8 +1918,7 @@ void LoadMtl(std::map<std::string, int> *material_map,
 
       // Set a decent diffuse default value if a diffuse texture is specified
       // without a matching Kd value.
-      if (!has_kd)
-      {
+      if (!has_kd) {
         material.diffuse[0] = static_cast<real_t>(0.6);
         material.diffuse[1] = static_cast<real_t>(0.6);
         material.diffuse[2] = static_cast<real_t>(0.6);

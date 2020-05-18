@@ -2,7 +2,7 @@
 #include <wm3D/cuda/cuda_headers.cuh>
 #include <wm3D/cuda/operators.cuh>
 
-namespace Gpu
+namespace cuda
 {
 __global__ void vertexMapKernel(const PtrStepSz<unsigned short> depth_map, PtrStep<float3> vertex_map, const float fx, const float fy, const float c_x, const float c_y, const float depth_cutoff,
 								const float depth_scale)
@@ -268,4 +268,4 @@ void hostMaskImage(const DeviceArray2D<float>& sobel_dx, const DeviceArray2D<flo
 	CudaSafeCall(cudaDeviceSynchronize());
 }
 
-}  // namespace Gpu
+}  // namespace cuda

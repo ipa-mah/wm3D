@@ -1,19 +1,20 @@
 #include <wm3D/cuda/cuda_headers.cuh>
 #include <wm3D/cuda/operators.cuh>
 
-namespace Gpu {
-
+namespace Gpu
+{
+/*
 __global__ void clearVolumeKernel (TsdfVolume tsdf)
 {
   int x = threadIdx.x + blockIdx.x * blockDim.x;
   int y = threadIdx.y + blockIdx.y * blockDim.y;
   if(x<tsdf.dims.x && y < tsdf.dims.y)
   {
-    short2 *beg = tsdf.beg(x, y);
-    short2 *end = beg + tsdf.dims.x * tsdf.dims.y * tsdf.dims.z;
+	short2 *beg = tsdf.beg(x, y);
+	short2 *end = beg + tsdf.dims.x * tsdf.dims.y * tsdf.dims.z;
 
-    for(short2* pos = beg; pos != end; pos = tsdf.zstep(pos))
-          *pos = pack_tsdf (0.f, 0);
+	for(short2* pos = beg; pos != end; pos = tsdf.zstep(pos))
+		  *pos = pack_tsdf (0.f, 0);
   }
 
 }
@@ -29,7 +30,5 @@ void clearVolume(TsdfVolume volume)
   cudaSafeCall ( cudaGetLastError () );
 }
 
-
-
-
+*/
 }

@@ -1,5 +1,5 @@
 #ifndef GBUFFER_H
-#define	GBUFFER_H
+#define GBUFFER_H
 
 #include <GL/glew.h>
 #include <memory>
@@ -8,17 +8,17 @@
 
 class GBuffer
 {
-public:
-
-	enum GBUFFER_TEXTURE_TYPE {
+  public:
+	enum GBUFFER_TEXTURE_TYPE
+	{
 		GBUFFER_TEXTURE_TYPE_DEPTH,
 		GBUFFER_TEXTURE_TYPE_COLOR,
 		GBUFFER_NUM_TEXTURES
 	};
 
 	GBuffer();
-    using Ptr = std::shared_ptr<GBuffer>;
-    using ConstPtr = std::shared_ptr<const GBuffer>;
+	using Ptr = std::shared_ptr<GBuffer>;
+	using ConstPtr = std::shared_ptr<const GBuffer>;
 	~GBuffer();
 
 	bool init(unsigned int WindowWidth, unsigned int WindowHeight);
@@ -31,8 +31,7 @@ public:
 
 	void setReadBuffer(GBUFFER_TEXTURE_TYPE TextureType);
 
-private:
-
+  private:
 	GLuint m_fbo;
 	GLuint m_textures[GBUFFER_NUM_TEXTURES];
 	GLuint m_depthTexture;
@@ -40,5 +39,4 @@ private:
 	GLuint m_colorTexture2;
 };
 
-#endif	/* SHADOWMAPFBO_H */
-
+#endif /* SHADOWMAPFBO_H */

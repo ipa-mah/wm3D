@@ -4,7 +4,7 @@
  *****************************************************************
  *
  * @note Copyright (c) 2019 Fraunhofer Institute for Manufacturing Engineering and Automation (IPA)
- * @note Project name: 
+ * @note Project name:
  * @author Author: Manh Ha Hoang
  *
  * @date Date of creation: 02.2019
@@ -13,9 +13,9 @@
  */
 #pragma once
 #include <cuda_runtime.h>
-#include <wm3D/cuda/device_array.hpp>
 #include <wm3D/cuda/data_types.cuh>
-namespace Gpu
+#include <wm3D/cuda/device_array.hpp>
+namespace cuda
 {
 // define warp size for NVIDA GPU
 #define WARP_SIZE 32
@@ -46,10 +46,9 @@ void computeFaceNormal(const DeviceArray<float3>& vertices);
 void createDepthBoundaryMask(const DeviceArray2D<unsigned short>& src, DeviceArray2D<short>& dx, DeviceArray2D<short>& dy, DeviceArray2D<uchar>& mask_map, const float depth_threshold);
 void hostMaskImage(const DeviceArray2D<float>& sobel_dx, const DeviceArray2D<float>& sobel_dy, DeviceArray2D<uchar>& mask_map, const float depth_threshold);
 
-
 __device__ __forceinline__ short2 pack_tsdf(float tsdf, int weight);
 
 __device__ __forceinline__ float unpack_tsdf(short2 value, int& weight);
 __device__ __forceinline__ float unpack_tsdf(short2 value);
 
-}  // namespace Gpu
+}  // namespace cuda

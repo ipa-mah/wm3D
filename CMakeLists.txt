@@ -62,9 +62,9 @@ include_directories(
     ${GLFW_INCLUDE_DIRS}
     ${GLEW_INCLUDE_DIRS}
     ${realsense_INCLUDE_DIR}
-
     )
 file(GLOB sources
+    
     "${CMAKE_SOURCE_DIR}/src/cuda/*.cu"
     "${CMAKE_SOURCE_DIR}/src/*.cpp"
     "${CMAKE_SOURCE_DIR}/src/utility/*.cpp"
