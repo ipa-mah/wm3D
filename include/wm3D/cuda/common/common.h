@@ -26,6 +26,9 @@ typedef unsigned short ushort;
 typedef unsigned int uinit;
 #endif
 
+#define WM3D_MIN(a, b) (a < b ? a : b)
+#define WM3D_MAX(a, b) (b < a ? a : b)
+
 #define THREAD_3D_UNIT 8
 #define THREAD_2D_UNIT 16
 #define THREAD_1D_UNIT 256

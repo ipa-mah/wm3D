@@ -8,7 +8,8 @@
 int main()
 {
 	std::cout << "ok" << std::endl;
-
+	Eigen::Vector3i a = Eigen::Vector3i::Zero();
+	std::cout<<a<<std::endl;
 	/*
 	std::string data_path = "/home/ipa-mah/catkin_ws/data/"
 							"scanStation_rec_ipatest_2020-05-13-09-20-01/2020-05-16-22-11-12/";

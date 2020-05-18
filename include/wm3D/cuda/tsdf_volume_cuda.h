@@ -5,7 +5,6 @@
 #include <eigen3/Eigen/Dense>
 #include <memory>
 #include <wm3D/cuda/device_array.hpp>
-#include <wm3D/cuda/common/type_conversions.h>
 namespace cuda
 {
 class TSDFVolumeCudaDevice
@@ -67,9 +66,9 @@ class TSDFVolumeCudaDevice
 	/** Value interpolating **/
 	__DEVICE__ float tsdfAt(const Eigen::Vector3f& X);
 	__DEVICE__ uchar weightAt(const Eigen::Vector3f& X);
-	__DEVICE__ Eigen::Vector3i colorAt(const Eigen::Vector3f& X);
+	__DEVICE__ Eigen::Vector3f colorAt(const Eigen::Vector3f& X);
 	__DEVICE__ Eigen::Vector3f gradientAt(const Eigen::Vector3f& X);
-
+	
   public:
 	__DEVICE__ void integrate(const Eigen::Vector3i& x,
 							 const DeviceArray2D<uchar3>& color,
