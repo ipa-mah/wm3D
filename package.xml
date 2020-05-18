@@ -1,17 +1,13 @@
 <?xml version="1.0"?>
 <package format="3">
-  <name>perception_utils</name>
-  <version>0.1.0</version>
-  <description>A package contains utility functions for manipulating with 3D models </description>
+  <name>wm3D</name>
+  <version>0.0.1</version>
+  <description>A package contains vision and graphics algorithms </description>
   <author email="manh.ha.hoang@ipa.fraunhofer.de">Manh-Ha Hoang</author>
-  <maintainer email="manh.ha.hoang@ipa.fraunhofer.de">Manh-Ha Hoang</maintainer>
+  <maintainer email="manh.ha.hoang@ipa.fraunhofer.de">Manh-Ha Hoang</maintainer>	
+ #TODO
   <license>MIT</license>
-	<depend>eigen</depend>
-    	<depend>libglfw3-dev</depend>
-	<depend>libglm-dev</depend>
-	<depend>libpcl-all-dev</depend>
- 	<depend>libopencv-dev</depend>
-    	<depend>yaml-cpp</depend>
+    	<depend>roscpp</depend>
   <export>
     <build_type>cmake</build_type>
   </export>
