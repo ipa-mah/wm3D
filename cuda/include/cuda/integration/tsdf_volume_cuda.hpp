@@ -1,10 +1,11 @@
 #pragma once
-#include <wm3D/cuda/common/common.h>
+#include <cuda/common/common.hpp>
+#include <cuda/container/device_array.hpp>
+
 #include <cstdlib>
 #include <eigen3/Eigen/Core>
 #include <eigen3/Eigen/Dense>
 #include <memory>
-#include <wm3D/cuda/device_array.hpp>
 namespace cuda
 {
 class TSDFVolumeCudaDevice
@@ -17,8 +18,10 @@ class TSDFVolumeCudaDevice
 
   public:
 	float voxel_length_;
+	float inv_voxel_length_;
 	float sdf_trunc_;
-
+	Eigen::Matrix4d volume_to_world_;
+	Eigen::Matrix4d world_to_volume_;
   public:
 	__DEVICE__ inline Eigen::Vector3i vectorize(std::size_t index)
 	{
@@ -51,33 +54,35 @@ class TSDFVolumeCudaDevice
 	}
 	/** Voxel level gradient -- NO trilinear interpolation.
 	 * This is especially useful for MarchingCubes **/
-	__DEVICE__ Eigen::Vector3f gradient(const Eigen::Vector3i& X);
+	__DEVICE__ Eigen::Vector3f gradient(const Eigen::Vector3i& x);
 
 	/** Coordinate conversions **/
-	__DEVICE__ inline bool inVolume(const Eigen::Vector3i& X);
-	__DEVICE__ inline bool inVolumef(const Eigen::Vector3f& X);
+	__DEVICE__ inline bool inVolume(const Eigen::Vector3i& x);
+	__DEVICE__ inline bool inVolumef(const Eigen::Vector3f& x);
 
-	__DEVICE__ inline Eigen::Vector3f worldToVoxelf(const Eigen::Vector3f& Xw);
-	__DEVICE__ inline Eigen::Vector3f voxelfToWorld(const Eigen::Vector3f& X);
-	__DEVICE__ inline Eigen::Vector3f volumeToVoxelf(const Eigen::Vector3f& Xv);
-	__DEVICE__ inline Eigen::Vector3f voxelfToVolume(const Eigen::Vector3f& X);
+	__DEVICE__ inline Eigen::Vector3f worldToVoxelf(const Eigen::Vector3f& x_w);
+	__DEVICE__ inline Eigen::Vector3f voxelfToWorld(const Eigen::Vector3f& x);
+	__DEVICE__ inline Eigen::Vector3f volumeToVoxelf(const Eigen::Vector3f& x_v);
+	__DEVICE__ inline Eigen::Vector3f voxelfToVolume(const Eigen::Vector3f& x);
 
   public:
 	/** Value interpolating **/
-	__DEVICE__ float tsdfAt(const Eigen::Vector3f& X);
-	__DEVICE__ uchar weightAt(const Eigen::Vector3f& X);
-	__DEVICE__ Eigen::Vector3f colorAt(const Eigen::Vector3f& X);
-	__DEVICE__ Eigen::Vector3f gradientAt(const Eigen::Vector3f& X);
+	__DEVICE__ float tsdfAt(const Eigen::Vector3f& x);
+	__DEVICE__ uchar weightAt(const Eigen::Vector3f& x);
+	__DEVICE__ Eigen::Vector3f colorAt(const Eigen::Vector3f& x);
+	__DEVICE__ Eigen::Vector3f gradientAt(const Eigen::Vector3f& x);
 	
   public:
 	__DEVICE__ void integrate(const Eigen::Vector3i& x,
-							 const DeviceArray2D<uchar3>& color,
-							 const DeviceArray2D<ushort>& depth,
-							  const Eigen::Matrix3d& intrins,
-							   const Eigen::Matrix4d& cam_to_world,
-							   int image_width,
-						  	int image_height);
-	__DEVICE__ void rayCasting(const Eigen::Vector2i& p, const Eigen::Matrix3d& intrins, const Eigen::Matrix4d& cam_to_world);
+							 const PtrStepSz<uchar3>& color,
+							 const PtrStepSz<ushort>& depth,
+							 const Eigen::Matrix3f& intrins,
+							 const Eigen::Matrix4f& cam_to_world,
+							 int image_width,
+						  	 int image_height,
+							 float depth_scale);
+	__DEVICE__ void rayCasting(const Eigen::Vector2i& p, const Eigen::Matrix3d& intrins,
+						 const Eigen::Matrix4f& cam_to_world);
 
   public:
 	friend class TSDFVolumeCuda;

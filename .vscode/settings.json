@@ -1,5 +1,7 @@
 {
     "files.associations": {
-        "*.cuh": "cpp"
+        "*.cuh": "cpp",
+        "ostream": "cpp",
+        "cstddef": "cpp"
     }
 }

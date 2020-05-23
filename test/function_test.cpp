@@ -1,12 +1,10 @@
-#include <wm3D/cuda/common/utils_cuda.h>
-#include <wm3D/cuda/tsdf_volume_cuda.h>
 #include <iostream>
 #include <memory>
 #include <opencv2/opencv.hpp>
-#include <wm3D/cuda/cuda_headers.cuh>
 #include <wm3D/utility/utils.hpp>
 int main()
 {
+	
 	std::cout << "ok" << std::endl;
 	Eigen::Vector3i a = Eigen::Vector3i::Zero();
 	std::cout<<a<<std::endl;

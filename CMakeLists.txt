@@ -1,6 +1,51 @@
 cmake_minimum_required (VERSION 3.1)
 project(wm3D VERSION 0.1.0 LANGUAGES CXX)
 
+# Options
+option(BUILD_CUDA_MODULE         "Build the CUDA module"                    ON)
+option(WITH_OPENMP               "Use OpenMP multi-threading"               ON)
+
+
+# Cuda module
+# Cache variables for specifying the GPU architectures
+set(CUDA_ARCH "Auto" CACHE STRING "Selects GPU architectures for code generation, \
+one of (Auto|BasicPTX|User). Set to 'User' to set a custom list of architectures" )
+set_property(CACHE CUDA_ARCH PROPERTY STRINGS Auto BasicPTX User)
+set(CUDA_ARCH_USER "" CACHE STRING "User defined list of GPU architectures, e.g. 3.5 5.0+PTX Turing" )
+
+# Build CUDA module by default if CUDA is available
+# Compatible with CMake 3.8+
+if (BUILD_CUDA_MODULE)
+    include(CheckLanguage)
+    check_language(CUDA)
+    if(CMAKE_CUDA_COMPILER)
+        find_package(CUDA REQUIRED) # required for cuda_select_nvcc_arch_flags
+        message(STATUS "Building CUDA enabled")
+        enable_language(CUDA)
+        # get gencode flags
+        if("${CUDA_ARCH}" STREQUAL "User")
+            cuda_select_nvcc_arch_flags(CUDA_GENCODES "${CUDA_ARCH_USER}")
+        elseif("${CUDA_ARCH}" STREQUAL "BasicPTX")
+            # include oldest and most recent PTX and rely on JIT compilation
+            set(CUDA_GENCODES "-gencode arch=compute_30,code=compute_30;-gencode arch=compute_75,code=compute_75")
+        else()
+            cuda_select_nvcc_arch_flags(CUDA_GENCODES "${CUDA_ARCH}")
+        endif()
+    else()
+        set(BUILD_CUDA_MODULE OFF)
+        message(STATUS "No CUDA support")
+    endif()
+    message("ARCH_FLAGS = ${CUDA_ARCH}")
+endif ()
+
+macro(ADD_SOURCE_GROUP MODULE_NAME)
+    file(GLOB MODULE_HEADER_FILES "${MODULE_NAME}/*.hpp")
+    source_group("Header Files\\${MODULE_NAME}" FILES ${MODULE_HEADER_FILES})
+    file(GLOB MODULE_SOURCE_FILES "${MODULE_NAME}/*.cpp")
+    source_group("Source Files\\${MODULE_NAME}" FILES ${MODULE_SOURCE_FILES})
+endmacro(ADD_SOURCE_GROUP)
+
+
 # We need a CMAKE_DIR with some code to find external dependencies
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
 set(CMAKE_CXX_STANDARD 14)
@@ -15,12 +60,6 @@ if (OPENMP_FOUND)
     set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
 endif()
 find_package(Boost REQUIRED)
-find_package(CUDA 9.0 REQUIRED)
-CUDA_SELECT_NVCC_ARCH_FLAGS(ARCH_FLAGS Auto)
-LIST(APPEND CUDA_NVCC_FLAGS ${ARCH_FLAGS})
-list(APPEND CUDA_NVCC_FLAGS "--compiler-options -fPIC")
-message("ARCH_FLAGS = ${ARCH_FLAGS}")
-
 find_package(GLEW REQUIRED)
 find_package(PCL REQUIRED)
 link_directories(${PCL_LIBRARY_DIRS})
@@ -47,10 +86,12 @@ include(ExternalProject)
 add_subdirectory(elibs)
 include_directories(${CMAKE_SOURCE_DIR}/elibs)
 
+
 ##########
 
 include_directories(
     include
+    cuda/include
     ${Boost_INCLUDE_DIRS}
     ${CUDA_INCLUDE_DIRS}
     ${OpenCV_INCLUDE_DIRS} 
@@ -63,19 +104,26 @@ include_directories(
     ${GLEW_INCLUDE_DIRS}
     ${realsense_INCLUDE_DIR}
     )
-file(GLOB sources
     
-    "${CMAKE_SOURCE_DIR}/src/cuda/*.cu"
+    
+################
+
+
+
+#Cuda directory
+add_subdirectory(cuda)
+#target_link_libraries(wm3D_CUDA_MODULE ${CUDA_LIBRARIES})
+
+file(GLOB sources
     "${CMAKE_SOURCE_DIR}/src/*.cpp"
     "${CMAKE_SOURCE_DIR}/src/utility/*.cpp"
     "${CMAKE_SOURCE_DIR}/src/visualization/*.cpp"
     )
-cuda_add_library(${PROJECT_NAME} ${sources} )
+add_library(${PROJECT_NAME} ${sources} )
 
 target_link_libraries(
     ${PROJECT_NAME}
     ${Boost_LIBRARIES}
-    ${CUDA_LIBRARIES}
     ${OpenCV_LIBS}
     ${Open3D_LIBRARIES}
     ${OPENGL_LIBRARIES}
@@ -95,7 +143,7 @@ target_link_libraries(mesh_rgbd_rendering ${PROJECT_NAME})
 #target_link_libraries(opengl_test ${PROJECT_NAME})
 #
 add_executable(function_test test/function_test.cpp)
-target_link_libraries(function_test ${PROJECT_NAME})
+target_link_libraries(function_test wm3D_CUDA_MODULE ${OpenCV_LIBRARIES} ${CUDA_LIBRARIES} ${Boost_LIBRARIES})
 
 
 # Install project files

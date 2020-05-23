@@ -1,7 +1,6 @@
 #include <cuda_runtime.h>
-#include <wm3D/cuda/cuda_headers.cuh>
-#include <wm3D/cuda/operators.cuh>
-
+#include <cuda/common/operators.cuh>
+#include <cuda/container/device_array.hpp>
 namespace cuda
 {
 __global__ void vertexMapKernel(const PtrStepSz<unsigned short> depth_map, PtrStep<float3> vertex_map, const float fx, const float fy, const float c_x, const float c_y, const float depth_cutoff,

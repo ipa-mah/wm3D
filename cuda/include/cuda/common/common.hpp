@@ -5,7 +5,7 @@
 /* Use these to avoid redundant conditional macro code ONLY in headers */
 #define __HOST__ __host__
 #define __DEVICE__ __device__
-#define __HOSTDEVICE__ __host__ __device__
+#define __HOSTDEVICE__ __host__ __device__ __forceinline__
 #define __GLOBAL__ __global__
 #else
 #define __HOST__

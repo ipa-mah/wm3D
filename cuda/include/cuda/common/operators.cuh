@@ -36,7 +36,7 @@
 
 #pragma once
 
-#include <wm3D/cuda/common/type_conversions.h>
+#include <cuda/common/type_conversions.hpp>
 
 #define DIVISOR 32767
 
@@ -136,23 +136,7 @@ __device__ __forceinline__ float3 operator*(const mat33& m, const float3& vec)
 	return make_float3(dot(m.data[0], vec), dot(m.data[1], vec), dot(m.data[2], vec));
 }
 
-// tsdf computation
-__device__ __forceinline__ short2* TsdfVolume::operator()(int x, int y, int z)
-{
-	return data + x + y * dims.x + z * dims.y * dims.x;
-}
-__device__ __forceinline__ const short2* TsdfVolume::operator()(int x, int y, int z) const
-{
-	return data + x + y * dims.x + z * dims.y * dims.x;
-}
-__device__ __forceinline__ short2* TsdfVolume::beg(int x, int y) const
-{
-	return data + x + dims.x * y;
-}
-__device__ __forceinline__ short2* TsdfVolume::zstep(short2* const ptr) const
-{
-	return ptr + dims.x * dims.y;
-}
+
 
 __device__ __forceinline__ void clear_voxel(uchar4& value)
 {
@@ -168,22 +152,6 @@ __device__ __forceinline__ void clear_voxel(short& value)
 }
 ////
 
-__device__ __forceinline__ short2 cuda::pack_tsdf(float tsdf, int weight)
-{
-	int fixedp = max(-DIVISOR, min(DIVISOR, __float2int_rz(tsdf * DIVISOR)));
-	return make_short2(fixedp, weight);
-}
-
-__device__ __forceinline__ float cuda::unpack_tsdf(short2 value, int& weight)
-{
-	weight = value.y;
-	return __int2float_rn(value.x) / DIVISOR;
-}
-
-__device__ __forceinline__ float cuda::unpack_tsdf(short2 value)
-{
-	return static_cast<float>(value.x) / DIVISOR;
-}
 
 template <class T>
 __device__ __host__ __forceinline__ void swap(T& a, T& b)
