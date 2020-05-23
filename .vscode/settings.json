@@ -2,6 +2,7 @@
     "files.associations": {
         "*.cuh": "cpp",
         "ostream": "cpp",
-        "cstddef": "cpp"
+        "cstddef": "cpp",
+        "fstream": "cpp"
     }
 }

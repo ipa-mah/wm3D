@@ -1,14 +1,15 @@
+#include <cuda/camera/camera_intrinsic_cuda.hpp>
+#include <cuda/integration/tsdf_volume_cuda.hpp>
 #include <iostream>
 #include <memory>
 #include <opencv2/opencv.hpp>
 #include <wm3D/utility/utils.hpp>
 int main()
 {
-	
 	std::cout << "ok" << std::endl;
 	Eigen::Vector3i a = Eigen::Vector3i::Zero();
-	std::cout<<a<<std::endl;
-	/*
+	std::cout << a << std::endl;
+	
 	std::string data_path = "/home/ipa-mah/catkin_ws/data/"
 							"scanStation_rec_ipatest_2020-05-13-09-20-01/2020-05-16-22-11-12/";
 	Eigen::Matrix3d cam_param;
@@ -20,6 +21,10 @@ int main()
 	std::vector<Eigen::Matrix4d> cam2worlds(num_views);
 	num_views -= 800;
 	std::cout<<"num views: "<<num_views<<std::endl;
+
+
+	cuda::TSDFVolumeCuda tsdf_volume(Eigen::Vector3i(512,512,512),0.001,0.005);
+	cuda::CameraIntrinsicCuda intrins(cam_param.cast<float>(),image_width,image_height);
 	for (int frame_idx = 0 ;frame_idx < num_views-800 ; frame_idx++) {
 	  std::ostringstream curr_frame_prefix;
 	  curr_frame_prefix << std::setw(6) << std::setfill('0') << frame_idx;
@@ -43,15 +48,10 @@ int main()
 		}
 	  }
 	  pose_f.close();
-	}
-	short2 a;
 
-	for (size_t i = 0; i < num_views; i++)
-	{
-
-	  DeviceArray2D<short> gpu_depth(depth_images[i]);
+	//tsdf_volume.in
 
 	}
-	*/
+	
 	return 0;
 }

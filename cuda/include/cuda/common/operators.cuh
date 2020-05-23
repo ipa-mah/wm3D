@@ -136,8 +136,6 @@ __device__ __forceinline__ float3 operator*(const mat33& m, const float3& vec)
 	return make_float3(dot(m.data[0], vec), dot(m.data[1], vec), dot(m.data[2], vec));
 }
 
-
-
 __device__ __forceinline__ void clear_voxel(uchar4& value)
 {
 	value = make_uchar4(0, 0, 0, 0);
@@ -151,7 +149,6 @@ __device__ __forceinline__ void clear_voxel(short& value)
 	value = max(-DIVISOR, min(DIVISOR, __float2int_rz(0 * DIVISOR)));
 }
 ////
-
 
 template <class T>
 __device__ __host__ __forceinline__ void swap(T& a, T& b)

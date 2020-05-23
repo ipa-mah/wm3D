@@ -7,7 +7,6 @@ macro(add_cuda_source_group module_name)
 endmacro()
 
 #find_package(CUDAToolkit REQUIRED)
-
 # GLOB all required files in this subdirectory
 file(GLOB_RECURSE CUDA_ALL_HEADER_FILES "*.hpp")
 file(GLOB_RECURSE CUDA_ALL_SOURCE_FILES "*.cpp")

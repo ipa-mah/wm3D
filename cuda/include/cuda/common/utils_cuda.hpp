@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cuda/common/helper_cuda.h>
 #include <cuda_runtime_api.h>
 #include <device_launch_parameters.h>
 #include <driver_types.h>
@@ -28,6 +29,5 @@ __device__ inline float atomicMaxf(float* addr, float value)
 	return old;
 }
 #endif
-
 
 }  // namespace cuda
