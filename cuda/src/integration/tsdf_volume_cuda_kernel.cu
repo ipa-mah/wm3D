@@ -101,10 +101,10 @@ __device__ void TSDFVolumeCudaDevice::integrate(const Eigen::Vector3i& x, const 
 	float w1 = 1 - w0;
 
 	tsdf_sum = tsdf * w0 + tsdf_sum * w1;
-	
-	//color_sum.x = color.x * w0 + color_sum(0) * w1;
-	//color_sum.y = color.y * w0 + color_sum(1) * w1; 
-	//color_sum.z = color.z * w0 + color_sum(2) * w1;
+
+	color_sum.x = color.x * w0 + color_sum.x * w1;
+	color_sum.y = color.y * w0 + color_sum.y * w1; 
+	color_sum.z = color.z * w0 + color_sum.z * w1;
 	weight_sum = uchar(fminf(weight_sum + 1.0f, 255));
 }
 

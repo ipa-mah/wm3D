@@ -5,6 +5,8 @@
 #include <opencv2/opencv.hpp>
 #include <wm3D/utility/utils.hpp>
 #include <cuda/container/device_array.hpp>
+#include <cuda/geometry/triangle_mesh_cuda.hpp>
+
 int main()
 {
 
