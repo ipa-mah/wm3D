@@ -4,8 +4,11 @@
 #include <memory>
 #include <opencv2/opencv.hpp>
 #include <wm3D/utility/utils.hpp>
+#include <cuda/container/device_array.hpp>
 int main()
 {
+
+	DeviceArray2D<uchar3> color;
 	std::cout << "ok" << std::endl;
 	Eigen::Vector3i a = Eigen::Vector3i::Zero();
 	std::cout << a << std::endl;
@@ -19,20 +22,23 @@ int main()
 	std::cout<<"Read RGBD frames"<<std::endl;
 	std::vector<cv::Mat> color_images(num_views), depth_images(num_views);
 	std::vector<Eigen::Matrix4d> cam2worlds(num_views);
-	num_views -= 800;
+	num_views -= 840;
 	std::cout<<"num views: "<<num_views<<std::endl;
 
 
 	cuda::TSDFVolumeCuda tsdf_volume(Eigen::Vector3i(512,512,512),0.001,0.005);
 	cuda::CameraIntrinsicCuda intrins(cam_param.cast<float>(),image_width,image_height);
-	for (int frame_idx = 0 ;frame_idx < num_views-800 ; frame_idx++) {
+	DeviceArray2D<uchar3> color_image_cuda;
+	DeviceArray2D<ushort> depth_image_cuda;
+	color_image_cuda.create(image_height,image_width);
+	depth_image_cuda.create(image_height,image_width);
+	for (int frame_idx = 0 ;frame_idx < num_views ; frame_idx++) {
 	  std::ostringstream curr_frame_prefix;
 	  curr_frame_prefix << std::setw(6) << std::setfill('0') << frame_idx;
 	  // // Read current frame depth
 	  std::string depth_im_file = data_path + "/frame-" + curr_frame_prefix.str() + ".depth.png";
 	  std::string rgb_im_file = data_path + "/frame-" + curr_frame_prefix.str() + ".color.png";
 	  std::string cam2world_file = data_path + "/frame-" + curr_frame_prefix.str() + ".pose.txt";
-
 	  cv::Mat color = cv::imread(rgb_im_file);
 	  if(color.empty()) std::cout<<"rgb error"<<std::endl;
 	  color_images[frame_idx] = color;
@@ -48,8 +54,9 @@ int main()
 		}
 	  }
 	  pose_f.close();
-
-	//tsdf_volume.in
+	color_image_cuda.upload(color.data,color.step,color.rows,color.cols);
+	depth_image_cuda.upload(depth.data,depth.step,depth.rows,depth.cols);
+	tsdf_volume.integrate(color_image_cuda,depth_image_cuda,intrins,cam2worlds[frame_idx].cast<float>().inverse(),0.001);
 
 	}
 	

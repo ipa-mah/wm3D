@@ -4,10 +4,12 @@
 #include <cuda/camera/camera_intrinsic_cuda.hpp>
 #include <cuda/common/common.hpp>
 #include <cuda/container/device_array.hpp>
+#include <cuda/common/utils_cuda.hpp>
 
 #include <eigen3/Eigen/Dense>
 #include <memory>
 #include <tuple>
+#include <iostream>
 namespace cuda
 {
 /// TSDF device class
@@ -15,9 +17,9 @@ class TSDFVolumeCudaDevice
 {
   public:
 	
-	u_char* weight_;
+	uchar* weight_;
 	float* tsdf_;
-	Eigen::Vector3i* color_;
+	uchar3* color_;
 
   public:
 	Eigen::Vector3i dims_;
@@ -53,7 +55,7 @@ class TSDFVolumeCudaDevice
 	{
 		return weight_[indexOf(v)];
 	}
-	__DEVICE__ inline Eigen::Vector3i& color(const Eigen::Vector3i& v)
+	__DEVICE__ inline uchar3& color(const Eigen::Vector3i& v)
 	{
 		return color_[indexOf(v)];
 	}
@@ -74,13 +76,13 @@ class TSDFVolumeCudaDevice
 	/** Value interpolating **/
 	__DEVICE__ float tsdfAt(const Eigen::Vector3f& x);
 	__DEVICE__ uchar weightAt(const Eigen::Vector3f& x);
-	__DEVICE__ Eigen::Vector3f colorAt(const Eigen::Vector3f& x);
+	__DEVICE__ uchar3 colorAt(const Eigen::Vector3f& x);
 	__DEVICE__ Eigen::Vector3f gradientAt(const Eigen::Vector3f& x);
 
   public:
-	__DEVICE__ void integrate(const Eigen::Vector3i& x, const PtrStepSz<uchar3>& color, const PtrStepSz<ushort>& depth, CameraIntrinsicCuda& intrins, const Eigen::Matrix4f& cam_to_world,
+	__DEVICE__ void integrate(const Eigen::Vector3i& x, const PtrStepSz<uchar3>& color, const PtrStepSz<ushort>& depth, CameraIntrinsicCuda& intrins, const Eigen::Matrix4f& world_to_cam,
 							  float depth_scale);
-	__DEVICE__ void rayCasting(const Eigen::Vector2i& p, const Eigen::Matrix3d& intrins, const Eigen::Matrix4f& cam_to_world);
+	__DEVICE__ void rayCasting(const Eigen::Vector2i& p, const Eigen::Matrix3d& intrins, const Eigen::Matrix4f& world_to_cam);
 
   public:
 	friend class TSDFVolumeCuda;
@@ -111,12 +113,15 @@ class TSDFVolumeCuda
 	void release();
 	void updateDevice();
 	void reset();
-	void uploadVolume(std::vector<float>& tsdf, std::vector<uchar>& weight, std::vector<Eigen::Vector3i>& color);
-	std::tuple<std::vector<float>, std::vector<uchar>, std::vector<Eigen::Vector3i>> downloadVolume();
+	void uploadVolume(std::vector<float>& tsdf, std::vector<uchar>& weight, std::vector<uchar3>& color);
+	std::tuple<std::vector<float>, std::vector<uchar>, std::vector<uchar3>> downloadVolume();
 
   public:
-	void integrate(const DeviceArray2D<uchar3>& color_image, const DeviceArray2D<ushort>& depth_image,
-					const CameraIntrinsicCuda& intrins, const Eigen::Matrix4f& cam_to_world);
+	void integrate(const DeviceArray2D<uchar3>& color_image,
+				   const DeviceArray2D<ushort>& depth_image,
+				   const CameraIntrinsicCuda& intrins,
+				   const Eigen::Matrix4f& world_to_cam,
+				   const float depth_scale);
 
 };
 
@@ -125,14 +130,21 @@ class TSDFVolumeCudaKernel
 {
   public:
 	static void reset(TSDFVolumeCuda& volume);
-	static void integrate(TSDFVolumeCuda& volume, DeviceArray2D<uchar3>& color_image, DeviceArray2D<ushort>& depth_image, CameraIntrinsicCuda& intrin, Eigen::Matrix4f& cam_to_world,
-						  float depth_scale);
-	static void rayCasting(TSDFVolumeCuda& volume, DeviceArray2D<float3>& image, CameraIntrinsicCuda& intrins, Eigen::Matrix4f& cam_to_world);
+	static void integrate(TSDFVolumeCuda& volume, 
+						const	DeviceArray2D<uchar3>& color_image, 
+						const	DeviceArray2D<ushort>& depth_image, 
+						const	CameraIntrinsicCuda& intrin, 
+						const	Eigen::Matrix4f& world_to_cam,
+						    const float depth_scale);
+	static void rayCasting(TSDFVolumeCuda& volume, 
+						   DeviceArray2D<float3>& image, 
+						   CameraIntrinsicCuda& intrins,
+						   Eigen::Matrix4f& world_to_cam);
 };
 
 __GLOBAL__ void resetTSDFVolumeCudaKernel(TSDFVolumeCudaDevice server);
-__GLOBAL__ void integrateKernel(TSDFVolumeCudaDevice server, PtrStepSz<uchar3> color_image, PtrStepSz<ushort> depth_image, CameraIntrinsicCuda intrins, Eigen::Matrix4f cam_to_world,
+__GLOBAL__ void integrateKernel(TSDFVolumeCudaDevice server, PtrStepSz<uchar3> color_image, PtrStepSz<ushort> depth_image, CameraIntrinsicCuda intrins, Eigen::Matrix4f world_to_cam,
 								float depth_scale);
-__GLOBAL__ void rayCastingKernel(TSDFVolumeCudaDevice server, PtrStepSz<float3> image, CameraIntrinsicCuda intrins, Eigen::Matrix4f cam_to_world);
+__GLOBAL__ void rayCastingKernel(TSDFVolumeCudaDevice server, PtrStepSz<float3> image, CameraIntrinsicCuda intrins, Eigen::Matrix4f world_to_cam);
 
 }  // namespace cuda
