@@ -11,3 +11,7 @@ ls -l eigen*
 sudo mv /tmp/eigen-eigen-323c052e1731 /usr/include/eigen3
 # check eigen version
 cat /usr/include/eigen3/Eigen/src/Core/util/Macros.h | grep VERSION
+
+# Install Open3D from source
+git clone --recursive https://github.com/intel-isl/Open3D
+cmake -DBUILD_EIGEN3=OFF -DBUILD_PNG=OFF -DBUILD_JSONCPP=OFF -DBUILD_FLANN=OFF -DGLIBCXX_USE_CXX11_ABI=ON -DPYTHON_EXECUTABLE=/usr/bin/python3 ..

@@ -3,21 +3,20 @@
 #include <cstdlib>
 #include <cuda/camera/camera_intrinsic_cuda.hpp>
 #include <cuda/common/common.hpp>
-#include <cuda/container/device_array.hpp>
 #include <cuda/common/utils_cuda.hpp>
+#include <cuda/container/device_array.hpp>
 
 #include <eigen3/Eigen/Dense>
+#include <iostream>
 #include <memory>
 #include <tuple>
-#include <iostream>
 namespace cuda
 {
 /// TSDF device class
 class TSDFVolumeCudaDevice
 {
   public:
-	
-	uchar* weight_;
+	float* weight_;
 	float* tsdf_;
 	uchar3* color_;
 
@@ -41,9 +40,13 @@ class TSDFVolumeCudaDevice
 		ret(2) = int(index / (dims_(0) * dims_(1)));
 		return ret;
 	}
-	__DEVICE__ inline int indexOf(const Eigen::Vector3i& v)
+	__DEVICE__ inline int indexOf(int x, int y, int z) const
 	{
-		return int(v(2) * (dims_(0) * dims_(1)) + v(1) * dims_(0) + v(0));
+		return x * dims_(1) * dims_(2) + y * dims_(2) + z;
+	}
+	__DEVICE__ inline int indexOf(const Eigen::Vector3i& xyz)
+	{
+		return indexOf(xyz(0), xyz(1), xyz(2));
 	}
 
   public:
@@ -51,7 +54,7 @@ class TSDFVolumeCudaDevice
 	{
 		return tsdf_[indexOf(v)];
 	}
-	__DEVICE__ inline uchar& weight(const Eigen::Vector3i& v)
+	__DEVICE__ inline float& weight(const Eigen::Vector3i& v)
 	{
 		return weight_[indexOf(v)];
 	}
@@ -109,20 +112,16 @@ class TSDFVolumeCuda
 	TSDFVolumeCuda& operator=(const TSDFVolumeCuda& other);
 	~TSDFVolumeCuda();
 
-	void create(const Eigen::Vector3i& dims );
+	void create(const Eigen::Vector3i& dims);
 	void release();
 	void updateDevice();
 	void reset();
-	void uploadVolume(std::vector<float>& tsdf, std::vector<uchar>& weight, std::vector<uchar3>& color);
-	std::tuple<std::vector<float>, std::vector<uchar>, std::vector<uchar3>> downloadVolume();
+	void uploadVolume(std::vector<float>& tsdf, std::vector<float>& weight, std::vector<uchar3>& color);
+	std::tuple<std::vector<float>, std::vector<float>, std::vector<uchar3>> downloadVolume();
 
   public:
-	void integrate(const DeviceArray2D<uchar3>& color_image,
-				   const DeviceArray2D<ushort>& depth_image,
-				   const CameraIntrinsicCuda& intrins,
-				   const Eigen::Matrix4f& world_to_cam,
+	void integrate(const DeviceArray2D<uchar3>& color_image, const DeviceArray2D<ushort>& depth_image, const CameraIntrinsicCuda& intrins, const Eigen::Matrix4f& world_to_cam,
 				   const float depth_scale);
-
 };
 
 /// kernel class
@@ -130,16 +129,14 @@ class TSDFVolumeCudaKernel
 {
   public:
 	static void reset(TSDFVolumeCuda& volume);
-	static void integrate(TSDFVolumeCuda& volume, 
-						const	DeviceArray2D<uchar3>& color_image, 
-						const	DeviceArray2D<ushort>& depth_image, 
-						const	CameraIntrinsicCuda& intrin, 
-						const	Eigen::Matrix4f& world_to_cam,
-						    const float depth_scale);
-	static void rayCasting(TSDFVolumeCuda& volume, 
-						   DeviceArray2D<float3>& image, 
-						   CameraIntrinsicCuda& intrins,
-						   Eigen::Matrix4f& world_to_cam);
+	static void integrate(TSDFVolumeCuda& volume, const DeviceArray2D<uchar3>& color_image, const DeviceArray2D<ushort>& depth_image, const CameraIntrinsicCuda& intrin,
+						  const Eigen::Matrix4f& world_to_cam, const float depth_scale);
+	void integrateTsdfVolume(const DeviceArray2D<unsigned short>& depth_map, DeviceArray2D<float>& tsdf_volume, DeviceArray2D<float>& weight_volume, const int volume_res, const float voxel_size,
+							 const float truncated_distance, const CameraIntrinsicCuda& cam_params, const Eigen::Matrix4f world_to_cam, const float depth_scale);
+
+	static void rayCasting(TSDFVolumeCuda& volume, DeviceArray2D<float3>& image, CameraIntrinsicCuda& intrins, Eigen::Matrix4f& world_to_cam);
+
+	void initializeVolume(DeviceArray2D<float>& tsdf_volume, DeviceArray2D<float>& weight_volume, const int volume_size);
 };
 
 __GLOBAL__ void resetTSDFVolumeCudaKernel(TSDFVolumeCudaDevice server);

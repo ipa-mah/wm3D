@@ -1,10 +1,8 @@
-#include <cuda_runtime.h>
-#include <cuda/common/operators.cuh>
-#include <cuda/container/device_array.hpp>
+#include <cuda/geometry/img_proc.hpp>
+
 namespace cuda
 {
-__global__ void vertexMapKernel(const PtrStepSz<unsigned short> depth_map, PtrStep<float3> vertex_map, const float fx, const float fy, const float c_x, const float c_y, const float depth_cutoff,
-								const float depth_scale)
+__global__ void vertexMapKernel(const PtrStepSz<unsigned short> depth_map, PtrStep<float3> vertex_map, const CameraIntrinsicCuda cam_params, const float depth_cutoff, const float depth_scale)
 {
 	// Get id of each thread in dimension x,y
 	const int x = blockIdx.x * blockDim.x + threadIdx.x;
@@ -16,22 +14,24 @@ __global__ void vertexMapKernel(const PtrStepSz<unsigned short> depth_map, PtrSt
 	float depth_value = depth_map.ptr(y)[x] * depth_scale;
 	if (depth_value != 0 && depth_value < depth_cutoff)
 	{
-		vertex_map.ptr(y)[x] = make_float3((x - c_x) * depth_value / fx, (y - c_y) * depth_value / fy, depth_value);
+		vertex_map.ptr(y)[x] = make_float3((x - cam_params.cx_) * depth_value / cam_params.fx_, (y - cam_params.cy_) * depth_value / cam_params.fy_, depth_value);
 	}
 	else
 	{
 		vertex_map.ptr(y)[x] = make_float3(__int_as_float(0x7fffffff), __int_as_float(0x7fffffff), __int_as_float(0x7fffffff));
 	}
 }
-void createVMap(const DeviceArray2D<unsigned short>& depth_map, DeviceArray2D<float3>& vertex_map, const CameraParameters& cam_params, const float depth_cutoff, const float depth_scale)
+void createVMap(const DeviceArray2D<unsigned short>& depth_map, DeviceArray2D<float3>& vertex_map, const CameraIntrinsicCuda& cam_params, const float depth_cutoff, const float depth_scale)
 {
 	vertex_map.create(depth_map.rows(), depth_map.cols());
-	dim3 block(32, 8);
-	dim3 grid((depth_map.cols() + block.x - 1) / block.x, (depth_map.rows() + block.y - 1) / block.y);
-	vertexMapKernel<<<grid, block>>>(depth_map, vertex_map, cam_params.focal_x, cam_params.focal_y, cam_params.c_x, cam_params.c_y, depth_cutoff, depth_scale);
 
-	CudaSafeCall(cudaGetLastError());
-	CudaSafeCall(cudaDeviceSynchronize());
+	const dim3 blocks(DIV_CEILING(depth_map.cols(), THREAD_2D_UNIT), DIV_CEILING(depth_map.rows(), THREAD_2D_UNIT));
+	const dim3 threads(THREAD_2D_UNIT, THREAD_2D_UNIT);
+
+	vertexMapKernel<<<blocks, threads>>>(depth_map, vertex_map, cam_params, depth_cutoff, depth_scale);
+
+	CheckCuda(cudaDeviceSynchronize());
+	CheckCuda(cudaGetLastError());
 }
 
 __global__ void computeNmapKernel(const PtrStepSz<float3> vmap, PtrStep<float3> nmap)
@@ -44,13 +44,17 @@ __global__ void computeNmapKernel(const PtrStepSz<float3> vmap, PtrStep<float3> 
 
 	if (x < vmap.cols - 1 && y < vmap.rows - 1)
 	{
-		float3 v00 = vmap.ptr(y)[x];
-		float3 v01 = vmap.ptr(y)[x + 1];
-		float3 v10 = vmap.ptr(y + 1)[x];
+		Eigen::Vector3f v00(vmap.ptr(y)[x].x, vmap.ptr(y)[x].y, vmap.ptr(y)[x].z);
+		Eigen::Vector3f v01(vmap.ptr(y)[x + 1].x, vmap.ptr(y)[x + 1].y, vmap.ptr(y)[x + 1].z);
+		Eigen::Vector3f v10(vmap.ptr(y + 1)[x].x, vmap.ptr(y + 1)[x].y, vmap.ptr(y + 1)[x].z);
 
-		if (v00.z * v01.z * v10.z != 0)
+		if (v00(2) * v01(2) * v10(2) != 0)
 		{
-			n_out = normalized(cross(v01 - v00, v10 - v00));
+			Eigen::Vector3f d010(v01(0) - v00(0), v01(1) - v00(1), v01(2) - v00(2));
+			Eigen::Vector3f d100(v10(0) - v00(0), v10(1) - v00(1), v10(2) - v00(2));
+			Eigen::Vector3f normal = d010.cross(d100);
+			normal.normalize();
+			n_out = make_float3(normal(0), normal(1), normal(2));
 		}
 	}
 	nmap.ptr(y)[x] = n_out;
@@ -60,11 +64,12 @@ void createNMap(const DeviceArray2D<float3>& vmap, DeviceArray2D<float3>& nmap)
 {
 	nmap.create(vmap.rows(), vmap.cols());
 
-	dim3 block(32, 8);
-	dim3 grid((vmap.cols() + block.x - 1) / block.x, (vmap.rows() + block.y - 1) / block.y);
+	const dim3 blocks(DIV_CEILING(vmap.cols(), THREAD_2D_UNIT), DIV_CEILING(vmap.rows(), THREAD_2D_UNIT));
+	const dim3 threads(THREAD_2D_UNIT, THREAD_2D_UNIT);
 
-	computeNmapKernel<<<grid, block>>>(vmap, nmap);
-	cudaSafeCall(cudaGetLastError());
+	computeNmapKernel<<<blocks, threads>>>(vmap, nmap);
+	CheckCuda(cudaDeviceSynchronize());
+	CheckCuda(cudaGetLastError());
 }
 
 __global__ void computeRenderMapKernel(const PtrStepSz<float3> normals, PtrStep<uchar3> render_image)
@@ -91,13 +96,14 @@ __global__ void computeRenderMapKernel(const PtrStepSz<float3> normals, PtrStep<
 void createRenderMap(const DeviceArray2D<float3>& normals, DeviceArray2D<uchar3>& render_image)
 {
 	render_image.create(normals.rows(), normals.cols());
-	dim3 block(32, 8);
-	dim3 grid((normals.cols() + block.x - 1) / block.x, (normals.rows() + block.y - 1) / block.y);
 
-	computeRenderMapKernel<<<grid, block>>>(normals, render_image);
+	const dim3 blocks(DIV_CEILING(normals.cols(), THREAD_2D_UNIT), DIV_CEILING(normals.rows(), THREAD_2D_UNIT));
+	const dim3 threads(THREAD_2D_UNIT, THREAD_2D_UNIT);
 
-	CudaSafeCall(cudaGetLastError());
-	CudaSafeCall(cudaDeviceSynchronize());
+	computeRenderMapKernel<<<blocks, threads>>>(normals, render_image);
+
+	CheckCuda(cudaDeviceSynchronize());
+	CheckCuda(cudaGetLastError());
 }
 
 /*
@@ -137,16 +143,18 @@ __global__ void kernelGaussFilter(const PtrStepSz<float> src, PtrStep<float> dst
 void createGaussianFilter(const DeviceArray2D<float>& src, DeviceArray2D<float>& dst)
 {
 	dst.create(src.rows(), src.cols());
-	dim3 block(32, 8);
-	dim3 grid((src.cols() + block.x - 1) / block.x, (src.rows() + block.y - 1) / block.y);
+
+	const dim3 blocks(DIV_CEILING(src.cols(), THREAD_2D_UNIT), DIV_CEILING(src.rows(), THREAD_2D_UNIT));
+	const dim3 threads(THREAD_2D_UNIT, THREAD_2D_UNIT);
+
 	const float gaussKernel[25] = {1, 4, 6, 4, 1, 4, 16, 24, 16, 4, 6, 24, 36, 24, 6, 4, 16, 24, 16, 4, 1, 4, 6, 4, 1};
 	float* gauss_cuda;
 	cudaMalloc((void**)&gauss_cuda, sizeof(float) * 25);
 	cudaMemcpy(gauss_cuda, &gaussKernel[0], sizeof(float) * 25, cudaMemcpyHostToDevice);
-	kernelGaussFilter<<<grid, block>>>(src, dst, gauss_cuda);
+	kernelGaussFilter<<<blocks, threads>>>(src, dst, gauss_cuda);
 
-	cudaSafeCall(cudaGetLastError());
-	cudaSafeCall(cudaDeviceSynchronize());
+	CheckCuda(cudaDeviceSynchronize());
+	CheckCuda(cudaGetLastError());
 }
 
 __global__ void kernelComputeFaceNormals(const float3* src, const int size)
@@ -161,8 +169,8 @@ void computeFaceNormal(const DeviceArray<float3>& vertices)
 	dim3 grid((vertices.size() + block.x - 1) / block.x);
 
 	kernelComputeFaceNormals<<<grid, block>>>(vertices, vertices.size());
-	cudaSafeCall(cudaGetLastError());
-	cudaSafeCall(cudaDeviceSynchronize());
+	CheckCuda(cudaDeviceSynchronize());
+	CheckCuda(cudaGetLastError());
 }
 /////////TODO////////////////////
 
@@ -222,8 +230,8 @@ void createDepthBoundaryMask(const DeviceArray2D<unsigned short>& src, DeviceArr
 		cudaMemcpyToSymbol(gsobel_x3x3, gsx3x3, sizeof(float) * 9);
 		cudaMemcpyToSymbol(gsobel_y3x3, gsy3x3, sizeof(float) * 9);
 
-		cudaSafeCall(cudaGetLastError());
-		cudaSafeCall(cudaDeviceSynchronize());
+		CheckCuda(cudaDeviceSynchronize());
+		CheckCuda(cudaGetLastError());
 
 		once = true;
 	}
@@ -233,8 +241,8 @@ void createDepthBoundaryMask(const DeviceArray2D<unsigned short>& src, DeviceArr
 
 	applyKernel<<<grid, block>>>(src, dx, dy, mask_map, depth_threshold);
 
-	cudaSafeCall(cudaGetLastError());
-	cudaSafeCall(cudaDeviceSynchronize());
+	CheckCuda(cudaDeviceSynchronize());
+	CheckCuda(cudaGetLastError());
 }
 
 __global__ void kernelMaskImage(const PtrStepSz<float> sobel_dx, const PtrStepSz<float> sobel_dy, PtrStep<uchar> mask_map, const float depth_threshold)
@@ -260,11 +268,13 @@ __global__ void kernelMaskImage(const PtrStepSz<float> sobel_dx, const PtrStepSz
 void hostMaskImage(const DeviceArray2D<float>& sobel_dx, const DeviceArray2D<float>& sobel_dy, DeviceArray2D<uchar>& mask_map, const float depth_threshold)
 {
 	mask_map.create(sobel_dx.rows(), sobel_dx.cols());
-	dim3 threads(32, 8);
-	dim3 blocks((sobel_dx.cols() + threads.x - 1) / threads.x, (sobel_dx.rows() + threads.y - 1) / threads.y);
+
+	const dim3 blocks(DIV_CEILING(sobel_dx.cols(), THREAD_2D_UNIT), DIV_CEILING(sobel_dx.rows(), THREAD_2D_UNIT));
+	const dim3 threads(THREAD_2D_UNIT, THREAD_2D_UNIT);
+
 	kernelMaskImage<<<blocks, threads>>>(sobel_dx, sobel_dy, mask_map, depth_threshold);
-	CudaSafeCall(cudaGetLastError());
-	CudaSafeCall(cudaDeviceSynchronize());
+	CheckCuda(cudaDeviceSynchronize());
+	CheckCuda(cudaGetLastError());
 }
 
 }  // namespace cuda

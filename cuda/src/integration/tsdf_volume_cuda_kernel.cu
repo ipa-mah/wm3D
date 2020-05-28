@@ -22,9 +22,10 @@ __device__ inline Eigen::Vector3f TSDFVolumeCudaDevice::worldToVoxelf(const Eige
 
 __device__ inline Eigen::Vector3f TSDFVolumeCudaDevice::voxelfToWorld(const Eigen::Vector3f& x)
 {
-	Eigen::Vector3f v = voxelfToVolume(x);
-	//volume_to_world_.setIdentity();
-	return (volume_to_world_.template cast<float>() * Eigen::Vector4f(v(0), v(1), v(2), 1)).head<3>();
+	// Eigen::Vector3f v = voxelfToVolume(x);
+	// volume_to_world_.setIdentity();
+	// return (volume_to_world_.template cast<float>() * Eigen::Vector4f(v(0), v(1), v(2), 1)).head<3>();
+	return voxelfToVolume(x);
 }
 
 __device__ inline Eigen::Vector3f TSDFVolumeCudaDevice::voxelfToVolume(const Eigen::Vector3f& x)
@@ -82,20 +83,30 @@ __device__ void TSDFVolumeCudaDevice::integrate(const Eigen::Vector3i& x, const 
 	Eigen::Vector3f x_w = voxelfToWorld(x.template cast<float>());
 	// transform voxel from world to camera
 	Eigen::Vector3f x_c = (world_to_cam * Eigen::Vector4f(x_w(0), x_w(1), x_w(1), 1)).head<3>();
-	int2 pixel = make_int2(__float2int_rn(intrins.fx_ * x_c(0) / x_c(2) + intrins.cx_), 
-						__float2int_rn(intrins.fy_ * x_c(1) / x_c(2) + intrins.cy_));	
-	if (pixel.x < 0 || pixel.x >= intrins.width_ || pixel.y < 0 || pixel.y >= intrins.height_)
-		return;
+	int2 pixel = make_int2(__float2int_rn(intrins.fx_ * x_c(0) / x_c(2) + intrins.cx_), __float2int_rn(intrins.fy_ * x_c(1) / x_c(2) + intrins.cy_));
+	// printf("%f %f %f\n",x_w(0),x_w(1),x_w(2));
+	// printf("%f %f %f %f\n",world_to_cam(0,0),world_to_cam(0,1),world_to_cam(0,2),world_to_cam(0,3));
+
+	if (pixel.x < 0 || pixel.x >= intrins.width_ || pixel.y < 0 || pixel.y >= intrins.height_) return;
 	float d = depth_image.ptr(pixel.y)[pixel.x] * depth_scale;
 	if (d <= 0.0001 || d > 5.0) return;
-	float tsdf = d - x_c(2);
-	if (tsdf <= -sdf_trunc_) return;
-	tsdf = fminf(tsdf / sdf_trunc_, 1.0f);
+	// printf("%f \n",d);
+	float sdf = d - x_c(2);
+	if (sdf < -sdf_trunc_) return;
+	const float new_tsdf = fminf(sdf / sdf_trunc_, 1.0f);
 	uchar3 color = color_image.ptr(pixel.y)[pixel.x];
 
+	float& current_tsdf = this->tsdf(x);
+	float& current_weight = this->weight(x);
+	const float add_weight = 1;
+	current_tsdf = (current_weight * current_tsdf + add_weight * new_tsdf) / (current_weight + add_weight);
+
+	current_weight = current_weight + add_weight;
+	/*
 	float& tsdf_sum = this->tsdf(x);
-	uchar& weight_sum = this->weight(x);
+	float& weight_sum = this->weight(x);
 	uchar3& color_sum = this->color(x);
+
 
 	float w0 = 1 / (weight_sum + 1.0f);
 	float w1 = 1 - w0;
@@ -103,9 +114,11 @@ __device__ void TSDFVolumeCudaDevice::integrate(const Eigen::Vector3i& x, const 
 	tsdf_sum = tsdf * w0 + tsdf_sum * w1;
 
 	color_sum.x = color.x * w0 + color_sum.x * w1;
-	color_sum.y = color.y * w0 + color_sum.y * w1; 
+	color_sum.y = color.y * w0 + color_sum.y * w1;
 	color_sum.z = color.z * w0 + color_sum.z * w1;
-	weight_sum = uchar(fminf(weight_sum + 1.0f, 255));
+	//weight_sum = fminf(weight_sum + 1.0f, 255);
+	weight_sum = weight_sum + 1.0f;
+	*/
 }
 
 ///////////////////////////////////////
@@ -118,7 +131,9 @@ __GLOBAL__ void resetTSDFVolumeCudaKernel(TSDFVolumeCudaDevice server)
 
 	if (x >= server.dims_(0) || y >= server.dims_(1) || z >= server.dims_(2)) return;
 	Eigen::Vector3i voxel = Eigen::Vector3i(x, y, z);
-	server.tsdf(voxel) = 1.0f;
+	server.tsdf(voxel) = 0.0;
+	server.color(voxel) = make_uchar3(0, 0, 0);
+	server.weight(voxel) = 0.0;
 }
 
 __host__ void TSDFVolumeCudaKernel::reset(TSDFVolumeCuda& volume)
@@ -134,12 +149,7 @@ __host__ void TSDFVolumeCudaKernel::reset(TSDFVolumeCuda& volume)
 	CheckCuda(cudaGetLastError());
 }
 
-__global__ void integrateKernel(TSDFVolumeCudaDevice server,
-							 PtrStepSz<uchar3> color_image,
-							 PtrStepSz<ushort> depth_image,
-							  CameraIntrinsicCuda intrins,
-							   Eigen::Matrix4f cam_to_world,
-							    float depth_scale)
+__global__ void integrateKernel(TSDFVolumeCudaDevice server, PtrStepSz<uchar3> color_image, PtrStepSz<ushort> depth_image, CameraIntrinsicCuda intrins, Eigen::Matrix4f cam_to_world, float depth_scale)
 {
 	const int x = threadIdx.x + blockIdx.x * blockDim.x;
 	const int y = threadIdx.y + blockIdx.y * blockDim.y;
@@ -151,15 +161,9 @@ __global__ void integrateKernel(TSDFVolumeCudaDevice server,
 }
 
 // caller from host
-__host__ void TSDFVolumeCudaKernel::integrate(TSDFVolumeCuda& volume,
-											const DeviceArray2D<uchar3>& color_image,
-											const DeviceArray2D<ushort>& depth_image,
-											const CameraIntrinsicCuda& intrin,
-											const Eigen::Matrix4f& world_to_cam,
-											const float depth_scale)
+__host__ void TSDFVolumeCudaKernel::integrate(TSDFVolumeCuda& volume, const DeviceArray2D<uchar3>& color_image, const DeviceArray2D<ushort>& depth_image, const CameraIntrinsicCuda& intrin,
+											  const Eigen::Matrix4f& world_to_cam, const float depth_scale)
 {
-	
-	
 	const int num_blocks_x = DIV_CEILING(volume.dims_(0), THREAD_3D_UNIT);
 	const int num_blocks_y = DIV_CEILING(volume.dims_(1), THREAD_3D_UNIT);
 	const int num_blocks_z = DIV_CEILING(volume.dims_(2), THREAD_3D_UNIT);

@@ -69,7 +69,13 @@
         "filesystem": "cpp",
         "hash_map": "cpp",
         "future": "cpp",
-        "__nullptr": "cpp"
+        "__nullptr": "cpp",
+        "alignedvector3": "cpp",
+        "*.txx": "cpp",
+        "forward_list": "cpp",
+        "*.ipp": "cpp",
+        "__functional_03": "cpp",
+        "__string": "cpp"
     },
     "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools"
 }

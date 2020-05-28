@@ -114,13 +114,19 @@ include_directories(
 add_subdirectory(cuda)
 #target_link_libraries(wm3D_CUDA_MODULE ${CUDA_LIBRARIES})
 
-file(GLOB sources
-    "${CMAKE_SOURCE_DIR}/src/*.cpp"
-    "${CMAKE_SOURCE_DIR}/src/utility/*.cpp"
-    "${CMAKE_SOURCE_DIR}/src/visualization/*.cpp"
-    )
-add_library(${PROJECT_NAME} ${sources} )
+#file(GLOB sources
+#    "${CMAKE_SOURCE_DIR}/src/*.cpp"
+#    "${CMAKE_SOURCE_DIR}/src/utility/*.cpp"
+#    "${CMAKE_SOURCE_DIR}/src/visualization/*.cpp"
+#    )
 
+# GLOB all required files in this subdirectory
+file(GLOB_RECURSE CPP_ALL_HEADER_FILES "${CMAKE_SOURCE_DIR}/include/*.hpp")
+file(GLOB_RECURSE CPP_ALL_SOURCE_FILES "${CMAKE_SOURCE_DIR}/src/*.cpp") 
+add_library(${PROJECT_NAME} 
+             ${CPP_ALL_HEADER_FILES}
+             ${CPP_ALL_SOURCE_FILES}
+            )
 target_link_libraries(
     ${PROJECT_NAME}
     ${Boost_LIBRARIES}
@@ -143,7 +149,7 @@ target_link_libraries(mesh_rgbd_rendering ${PROJECT_NAME})
 #target_link_libraries(opengl_test ${PROJECT_NAME})
 #
 add_executable(function_test test/function_test.cpp)
-target_link_libraries(function_test wm3D_CUDA_MODULE ${OpenCV_LIBRARIES} ${CUDA_LIBRARIES} ${Boost_LIBRARIES})
+target_link_libraries(function_test wm3D_CUDA_MODULE ${PROJECT_NAME} )
 
 
 # Install project files
