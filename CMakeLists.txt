@@ -83,8 +83,8 @@ link_directories(${Open3D_LIBRARY_DIRS})
 
 # tinyobjectloader
 include(ExternalProject)
-add_subdirectory(elibs)
-include_directories(${CMAKE_SOURCE_DIR}/elibs)
+#add_subdirectory(elibs)
+#include_directories(${CMAKE_SOURCE_DIR}/elibs)
 
 
 ##########
@@ -112,7 +112,7 @@ include_directories(
 
 #Cuda directory
 add_subdirectory(cuda)
-#target_link_libraries(wm3D_CUDA_MODULE ${CUDA_LIBRARIES})
+#target_link_libraries(wm3D_CUDA_MODULE ${CUDA_LIBRARIES} ${OpenCV_LIBRARIES})
 
 #file(GLOB sources
 #    "${CMAKE_SOURCE_DIR}/src/*.cpp"
@@ -137,7 +137,7 @@ target_link_libraries(
     ${GLFW_LIBRARIES}
     ${GLUT_LIBRARY}
     ${GLEW_LIBRARIES}
-    tinyobjloader
+    #tinyobjloader
     ${realsense2_LIBRARIES}
     )
 
@@ -151,6 +151,8 @@ target_link_libraries(mesh_rgbd_rendering ${PROJECT_NAME})
 add_executable(function_test test/function_test.cpp)
 target_link_libraries(function_test wm3D_CUDA_MODULE ${PROJECT_NAME} )
 
+add_executable(triangle_mesh_cuda_test test/triangle_mesh_cuda_test.cpp)
+target_link_libraries(triangle_mesh_cuda_test wm3D_CUDA_MODULE ${PROJECT_NAME} )
 
 # Install project files
 

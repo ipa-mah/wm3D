@@ -37,7 +37,8 @@
 #pragma once
 
 #include <cuda/common/type_conversions.hpp>
-
+#include <eigen3/Eigen/Core>
+#include <eigen3/Eigen/Dense>
 #define DIVISOR 32767
 
 #define COMPOUND_VEC3_OP(type, scalar, op)                                          \

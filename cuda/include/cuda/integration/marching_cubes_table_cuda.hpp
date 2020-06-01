@@ -1,6 +1,6 @@
 #pragma once
 
-#include <cuda/common/common.h>
+#include <cuda/common/common.hpp>
 #include <eigen3/Eigen/Core>
 namespace cuda
 {

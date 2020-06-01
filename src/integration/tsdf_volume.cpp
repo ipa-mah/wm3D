@@ -2,13 +2,10 @@
 #include <utility>
 #include <wm3D/integration/tsdf_volume.hpp>
 
-TSDFVolume::TSDFVolume(const Eigen::Vector3i& dims, const float voxel_length)
-  : dims_(dims), voxel_length_(voxel_length)
+TSDFVolume::TSDFVolume(const Eigen::Vector3i& dims, const float voxel_length) : dims_(dims), voxel_length_(voxel_length)
 {
-	
 }
-void TSDFVolume::downloadTsdfAndWeights(const DeviceArray2D<float>& device_tsdf,
-	 							const DeviceArray2D<float>& device_weights)
+void TSDFVolume::downloadTsdfAndWeights(const DeviceArray2D<float>& device_tsdf, const DeviceArray2D<float>& device_weights)
 {
 	tsdf_.assign(dims_(0) * dims_(1) * dims_(2), 0.0f);
 	weights_.assign(dims_(0) * dims_(1) * dims_(2), 0.0f);
@@ -47,8 +44,7 @@ pcl::PolygonMesh TSDFVolume::extractMesh(const Eigen::Vector3d& crop_min, const 
 		{
 			for (int z = 0; z < dims_(2) - 1; z++)
 			{
-				Eigen::Vector3d pt_world(static_cast<double>(voxel_length_) * (0.5 + x),
-				 static_cast<double>(voxel_length_) * (0.5 + y), static_cast<double>(voxel_length_) * (0.5 + z));
+				Eigen::Vector3d pt_world(static_cast<double>(voxel_length_) * (0.5 + x), static_cast<double>(voxel_length_) * (0.5 + y), static_cast<double>(voxel_length_) * (0.5 + z));
 				if (pt_world(0) > crop_max(0) || pt_world(0) < crop_min(0) || pt_world(1) > crop_max(1) || pt_world(1) < crop_min(1) || pt_world(2) > crop_max(2) || pt_world(2) < crop_min(2))
 					continue;
 				int cube_index = 0;
@@ -136,9 +132,7 @@ pcl::PointCloud<pcl::PointNormal>::Ptr TSDFVolume::extractPointCloud(const Eigen
 				if (w0 != 0.0f && f0 < 0.98f && f0 >= -0.98f)
 				{
 					// get voxel coordinate
-					Eigen::Vector3d p0(static_cast<double>(voxel_length_) * (0.5 + x), 
-					static_cast<double>(voxel_length_) * (0.5 + y),
-					 static_cast<double>(voxel_length_) * (0.5 + z));
+					Eigen::Vector3d p0(static_cast<double>(voxel_length_) * (0.5 + x), static_cast<double>(voxel_length_) * (0.5 + y), static_cast<double>(voxel_length_) * (0.5 + z));
 					if (p0(0) > crop_max(0) || p0(0) < crop_min(0) || p0(1) > crop_max(1) || p0(1) < crop_min(1) || p0(2) > crop_max(2) || p0(2) < crop_min(2)) continue;
 					for (int i = 0; i < 3; i++)
 					{
@@ -148,7 +142,7 @@ pcl::PointCloud<pcl::PointNormal>::Ptr TSDFVolume::extractPointCloud(const Eigen
 						Eigen::Vector3i idx1 = idx0;
 						idx1(i) += 1;
 						// If inside the cube
-						if (idx1(i) <  dims_(0)  - 1)
+						if (idx1(i) < dims_(0) - 1)
 						{
 							float w1 = weights_[IndexOf(idx1)];
 							float f1 = tsdf_[IndexOf(idx1)];

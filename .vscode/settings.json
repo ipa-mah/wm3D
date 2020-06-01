@@ -77,5 +77,6 @@
         "__functional_03": "cpp",
         "__string": "cpp"
     },
-    "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools"
+    "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
+    "python.pythonPath": "/home/ipa-mah/anaconda3/envs/pytorch_env/bin/python"
 }

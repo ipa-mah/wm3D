@@ -16,10 +16,8 @@
 #include <opencv2/opencv.hpp>
 #include <wm3D/utility/utils.hpp>
 #include <wm3D/integration/tsdf_volume.hpp>
-
 int main()
 {
-	
 	std::string data_path =
 		"/home/ipa-mah/catkin_ws/data/"
 		"scanStation_rec_ipatest_2020-05-13-09-20-01/2020-05-16-22-11-12/";
@@ -30,21 +28,21 @@ int main()
 	std::cout << "Read RGBD frames" << std::endl;
 	std::vector<cv::Mat> color_images(num_views), depth_images(num_views);
 	std::vector<Eigen::Matrix4d> cam2worlds(num_views);
-	num_views -= 840;
+	//num_views -= 840;
 	Eigen::Vector3i dims(512, 512, 512);
+	float voxel_length = 0.001;
+	float sdf_trunc = voxel_length * 5;
 	std::cout << "num views: " << num_views << std::endl;
+	std::cout << "voxel_length: " << voxel_length << std::endl;
+	std::cout << "sdf_trunc: " << sdf_trunc << std::endl;
+	std::cout << "dims: " << dims << std::endl;
 
-	cuda::TSDFVolumeCuda tsdf_volume(Eigen::Vector3i(512, 512, 512), 0.001, 0.005);
 	cuda::CameraIntrinsicCuda intrins(cam_param.cast<float>(), image_width, image_height);
 	DeviceArray2D<uchar3> color_image_cuda;
 	DeviceArray2D<ushort> depth_image_cuda;
 	color_image_cuda.create(image_height, image_width);
 	depth_image_cuda.create(image_height, image_width);
-	DeviceArray2D<float> tsdf_volume_;
-	DeviceArray2D<float> weight_volume_;
-	tsdf_volume_.create(dims(2) * dims(1), dims(0));
-	weight_volume_.create(dims(2) * dims(1), dims(0));
-	cuda::initializeVolume(tsdf_volume_, weight_volume_, dims);
+	cuda::TSDFVolumeCuda::Ptr volume = std::make_shared<cuda::TSDFVolumeCuda>(dims,voxel_length,sdf_trunc);
 
 	for (int frame_idx = 0; frame_idx < num_views; frame_idx++)
 	{
@@ -73,14 +71,18 @@ int main()
 		pose_f.close();
 		color_image_cuda.upload(color.data, color.step, color.rows, color.cols);
 		depth_image_cuda.upload(depth.data, depth.step, depth.rows, depth.cols);
-		cuda::integrateTsdfVolume(depth_image_cuda, tsdf_volume_, weight_volume_, dims, 0.001, 0.005, intrins, cam2worlds[frame_idx].cast<float>().inverse(), 0.001);
-		// tsdf_volume.integrate(color_image_cuda,depth_image_cuda,intrins,cam2worlds[frame_idx].cast<float>().inverse(),0.001);
+		volume->integrateTsdfVolume(depth_image_cuda,
+		intrins,cam2worlds[frame_idx].cast<float>().inverse(),0.001);
 	}
-	Eigen::Vector3d crop_min(0.03,0.03,0.009);
-  	Eigen::Vector3d crop_max(0.399,0.285,0.4);
-	TSDFVolume::Ptr volume = std::make_shared<TSDFVolume>(dims,0.001);
-	volume->downloadTsdfAndWeights(tsdf_volume_,weight_volume_);
-	pcl::PolygonMesh mesh = volume->extractMesh(crop_min,crop_max);
-  	pcl::io::savePLYFile("mesh0.ply",mesh);
+	std::cout << "tsdf" << std::endl;
+
+	Eigen::Vector3d crop_min(0.03, 0.03, 0.009);
+	Eigen::Vector3d crop_max(0.399, 0.285, 0.4);
+	TSDFVolume::Ptr surface = std::make_shared<TSDFVolume>(dims, 0.001);
+	surface->downloadTsdfAndWeights(volume->tsdf_volume_, volume->weight_volume_);
+	std::cout << "extract mesh" << std::endl;
+	pcl::PolygonMesh mesh = surface->extractMesh(crop_min, crop_max);
+	pcl::io::savePLYFile("mesh0.ply", mesh);
+	
 	return 0;
 }

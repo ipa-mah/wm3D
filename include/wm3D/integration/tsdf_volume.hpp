@@ -5,19 +5,18 @@
 #include <thread>
 #include <unordered_map>
 
-
+#include <cuda/cuda_headers.hpp>
 #include <wm3D/camera/camera_intrinsic.hpp>
 #include <wm3D/integration/marching_cubes_table.hpp>
 #include <wm3D/utility/utils.hpp>
-#include <cuda/cuda_headers.hpp>
 // OpenCV
 #include <opencv2/opencv.hpp>
 // PCL
 #include <pcl/PolygonMesh.h>
 #include <pcl/common/transforms.h>
+#include <pcl/io/io.h>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
-#include <pcl/io/io.h>
 
 // Headers
 class TSDFVolume
@@ -27,8 +26,7 @@ class TSDFVolume
 	using ConstPtr = std::shared_ptr<const TSDFVolume>;
 	TSDFVolume(const Eigen::Vector3i& dims, const float voxel_length);
 	pcl::PolygonMesh extractMesh(const Eigen::Vector3d& crop_min, const Eigen::Vector3d& crop_max);
-	void downloadTsdfAndWeights(const DeviceArray2D<float>& device_tsdf,
-	 							const DeviceArray2D<float>& device_weights);
+	void downloadTsdfAndWeights(const DeviceArray2D<float>& device_tsdf, const DeviceArray2D<float>& device_weights);
 
 	pcl::PointCloud<pcl::PointNormal>::Ptr extractPointCloud(const Eigen::Vector3d& crop_min, const Eigen::Vector3d& crop_max);
 	///

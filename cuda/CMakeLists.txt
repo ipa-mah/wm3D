@@ -13,15 +13,15 @@ file(GLOB_RECURSE CUDA_ALL_SOURCE_FILES "*.cpp")
 file(GLOB_RECURSE CUDA_ALL_CUDA_HEADER_FILES "*.cuh")
 file(GLOB_RECURSE CUDA_ALL_CUDA_SOURCE_FILES "*.cu")
 #set(wm3D_CUDA_MODULE "wm3DCuda" CACHE STRING "CUDA component library")
-
-cuda_add_library(wm3D_CUDA_MODULE
+# No need to cuda_add_library anymore
+add_library(wm3D_CUDA_MODULE
         ${CUDA_ALL_HEADER_FILES}
         ${CUDA_ALL_SOURCE_FILES}
         ${CUDA_ALL_CUDA_HEADER_FILES}
         ${CUDA_ALL_CUDA_SOURCE_FILES}
         )
 
-target_link_libraries(wm3D_CUDA_MODULE ${CUDA_LIBRARIES})
+target_link_libraries(wm3D_CUDA_MODULE ${CUDA_LIBRARIES} ${OpenCV_LIBRARIES})
 
 
 

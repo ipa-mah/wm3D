@@ -1,18 +1,20 @@
 #pragma once
-#include <wm3D/texture_mesh.h>
+#include <Open3D/Open3D.h>
 #include <cuda/common/common.hpp>
 #include <cuda/container/device_array.hpp>
+#include <cuda/integration/marching_cubes_table_cuda.hpp>
 #include <iostream>
 #include <memory>
+#include <opencv2/opencv.hpp>
 namespace cuda
 {
 class TriangleMeshCudaDevice
 {
   public:
-	PtrStepSz<Eigen::Vector3f> vertices_;
-	PtrStepSz<Eigen::Vector3f> normals_;
-	PtrStepSz<Eigen::Vector3f> vertex_colors_;
-	PtrStepSz<Eigen::Vector3i> triangles_;
+	cv::cuda::PtrStepSz<Eigen::Vector3f> vertices_;
+	cv::cuda::PtrStepSz<Eigen::Vector3f> normals_;
+	cv::cuda::PtrStepSz<Eigen::Vector3f> vertex_colors_;
+	cv::cuda::PtrStepSz<Eigen::Vector3i> triangles_;
 
   public:
 	int max_vertices_;
@@ -28,10 +30,10 @@ class TriangleMeshCuda
 {
   public:
 	TriangleMeshCudaDevice::Ptr device_ = nullptr;
-	DeviceArray<Eigen::Vector3f> vertices_;
-	DeviceArray<Eigen::Vector3f> normals_;
-	DeviceArray<Eigen::Vector3f> vertex_colors_;
-	DeviceArray<Eigen::Vector3i> triangles_;
+	DeviceArray<Eigen::Vector3f> gpu_vertices_;
+	DeviceArray<Eigen::Vector3f> gpu_normals_;
+	DeviceArray<Eigen::Vector3f> gpu_vertex_colors_;
+	DeviceArray<Eigen::Vector3i> gpu_triangles_;
 
   public:
 	int max_vertices_;
@@ -48,7 +50,7 @@ class TriangleMeshCuda
 
 	void reset();
 	void updateDevice();
-	void create(int max_vertices, int max_indices);
+	void create(int max_vertices, int max_triangles);
 	void release();
 
 	bool hasVertices() const;
@@ -56,8 +58,8 @@ class TriangleMeshCuda
 	bool hasVertexNormals() const;
 	bool hasVertexColors() const;
 
-	void upload(TriangleMesh& mesh);
-	TriangleMesh::Ptr download();
+	void upload(const open3d::geometry::TriangleMesh& mesh);
+	open3d::geometry::TriangleMesh download();
 
 	TriangleMeshCuda& clear();
 	bool isEmpty();

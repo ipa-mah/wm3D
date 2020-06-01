@@ -11,8 +11,8 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
-#define TINYOBJLOADER_IMPLEMENTATION
-#include "tinyobjloader/tiny_obj_loader.h"
+//#define TINYOBJLOADER_IMPLEMENTATION
+//#include "tinyobjloader/tiny_obj_loader.h"
 
 class MeshBase
 {
@@ -158,7 +158,7 @@ class TriangleMesh : public MeshBase
 
 TriangleMesh& TriangleMesh::clear()
 {
-	MeshBase::clear();
+	//MeshBase::clear();
 	triangles_.clear();
 	triangle_normals_.clear();
 	adjacency_list_.clear();
@@ -167,7 +167,7 @@ TriangleMesh& TriangleMesh::clear()
 	textures_.clear();
 	return *this;
 }
-
+/*
 static bool readTextureMeshfromOBJFile(const std::string filename, TriangleMesh::Ptr& mesh)
 {
 	tinyobj::attrib_t attrib;
@@ -298,5 +298,5 @@ static bool readTextureMeshfromOBJFile(const std::string filename, TriangleMesh:
 
 	return true;
 }
-
+*/
 #endif  // TRIANGLE_MESH_H
