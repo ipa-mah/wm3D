@@ -11,17 +11,14 @@
 
 namespace cuda
 {
-void initializeVolume(DeviceArray2D<float>& tsdf_volume, 
-					DeviceArray2D<float>& weight_volume, const Eigen::Vector3i& dims);
+void initializeVolume(DeviceArray2D<float>& tsdf_volume, DeviceArray2D<float>& weight_volume, const Eigen::Vector3i& dims);
 void initializeVolume(cv::cuda::GpuMat& tsdf_volume, cv::cuda::GpuMat& weight_volume, const Eigen::Vector3i& dims);
 void integrateTsdfVolume(const DeviceArray2D<unsigned short>& depth_map, DeviceArray2D<float>& tsdf_volume, DeviceArray2D<float>& weight_volume, const Eigen::Vector3i& dims, const float voxel_length,
-						 const float truncated_distance, const CameraIntrinsicCuda& cam_params, 
-						 const Eigen::Matrix4f& world_to_cam, const float depth_scale);
+						 const float truncated_distance, const CameraIntrinsicCuda& cam_params, const Eigen::Matrix4f& world_to_cam, const float depth_scale);
 
 void integrateTsdfVolume(const cv::cuda::GpuMat& depth_map, cv::cuda::GpuMat& tsdf_volume, cv::cuda::GpuMat& weight_volume, const Eigen::Vector3i& dims, const float voxel_length,
 						 const float truncated_distance, const CameraIntrinsicCuda& cam_params, const Eigen::Matrix4f world_to_cam, const float depth_scale);
 
 void testTriangleMeshCuda(DeviceArray<Eigen::Vector3f>& vertices);
-
 
 }  // namespace cuda

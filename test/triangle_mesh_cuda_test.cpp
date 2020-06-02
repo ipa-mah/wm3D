@@ -16,7 +16,7 @@ int main()
 {
 	std::string mesh_file = "/home/ipa-mah/1_projects/wm3D/data/texture_model.obj";
 	open3d::geometry::TriangleMesh mesh;
-	open3d::io::ReadTriangleMeshFromOBJ(mesh_file, mesh,true);
+	open3d::io::ReadTriangleMeshFromOBJ(mesh_file, mesh, true);
 	cuda::TriangleMeshCuda cuda_mesh(100000, 100000);
 	cuda_mesh.upload(mesh);
 	DeviceArray<Eigen::Vector3f> devices;
@@ -27,7 +27,7 @@ int main()
 		Eigen::Vector3f v = mesh.vertices_[i].cast<float>();
 		ver.push_back(v);
 	}
-	
+
 	devices.upload(ver);
 	cuda::testTriangleMeshCuda(devices);
 	return 0;

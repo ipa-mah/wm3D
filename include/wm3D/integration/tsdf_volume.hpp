@@ -6,6 +6,7 @@
 #include <unordered_map>
 
 #include <cuda/cuda_headers.hpp>
+#include <cuda/common/utils_cuda.hpp>
 #include <wm3D/camera/camera_intrinsic.hpp>
 #include <wm3D/integration/marching_cubes_table.hpp>
 #include <wm3D/utility/utils.hpp>

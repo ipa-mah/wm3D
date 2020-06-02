@@ -158,7 +158,7 @@ class TriangleMesh : public MeshBase
 
 TriangleMesh& TriangleMesh::clear()
 {
-	//MeshBase::clear();
+	// MeshBase::clear();
 	triangles_.clear();
 	triangle_normals_.clear();
 	adjacency_list_.clear();

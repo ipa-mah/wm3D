@@ -14,8 +14,8 @@
 #include <iostream>
 #include <memory>
 #include <opencv2/opencv.hpp>
-#include <wm3D/utility/utils.hpp>
 #include <wm3D/integration/tsdf_volume.hpp>
+#include <wm3D/utility/utils.hpp>
 int main()
 {
 	std::string data_path =
@@ -28,7 +28,7 @@ int main()
 	std::cout << "Read RGBD frames" << std::endl;
 	std::vector<cv::Mat> color_images(num_views), depth_images(num_views);
 	std::vector<Eigen::Matrix4d> cam2worlds(num_views);
-	//num_views -= 840;
+	// num_views -= 840;
 	Eigen::Vector3i dims(512, 512, 512);
 	float voxel_length = 0.001;
 	float sdf_trunc = voxel_length * 5;
@@ -42,7 +42,7 @@ int main()
 	DeviceArray2D<ushort> depth_image_cuda;
 	color_image_cuda.create(image_height, image_width);
 	depth_image_cuda.create(image_height, image_width);
-	cuda::TSDFVolumeCuda::Ptr volume = std::make_shared<cuda::TSDFVolumeCuda>(dims,voxel_length,sdf_trunc);
+	cuda::TSDFVolumeCuda::Ptr volume = std::make_shared<cuda::TSDFVolumeCuda>(dims, voxel_length, sdf_trunc);
 
 	for (int frame_idx = 0; frame_idx < num_views; frame_idx++)
 	{
@@ -71,8 +71,7 @@ int main()
 		pose_f.close();
 		color_image_cuda.upload(color.data, color.step, color.rows, color.cols);
 		depth_image_cuda.upload(depth.data, depth.step, depth.rows, depth.cols);
-		volume->integrateTsdfVolume(depth_image_cuda,
-		intrins,cam2worlds[frame_idx].cast<float>().inverse(),0.001);
+		volume->integrateTsdfVolume(depth_image_cuda, intrins, cam2worlds[frame_idx].cast<float>().inverse(), 0.001);
 	}
 	std::cout << "tsdf" << std::endl;
 
@@ -83,6 +82,6 @@ int main()
 	std::cout << "extract mesh" << std::endl;
 	pcl::PolygonMesh mesh = surface->extractMesh(crop_min, crop_max);
 	pcl::io::savePLYFile("mesh0.ply", mesh);
-	
+
 	return 0;
 }

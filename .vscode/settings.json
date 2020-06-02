@@ -75,7 +75,10 @@
         "forward_list": "cpp",
         "*.ipp": "cpp",
         "__functional_03": "cpp",
-        "__string": "cpp"
+        "__string": "cpp",
+        "__locale": "cpp",
+        "ios": "cpp",
+        "core": "cpp"
     },
     "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
     "python.pythonPath": "/home/ipa-mah/anaconda3/envs/pytorch_env/bin/python"

@@ -80,12 +80,8 @@ __global__ void integrateKernel(const PtrStepSz<unsigned short> depth_image, Ptr
 	}
 }
 
-void integrateTsdfVolume(const DeviceArray2D<unsigned short>& depth_map, DeviceArray2D<float>& tsdf_volume, 
-						 DeviceArray2D<float>& weight_volume, const Eigen::Vector3i& dims, 
-						const float voxel_length,
-						const float truncated_distance,
-						const CameraIntrinsicCuda& cam_params, const Eigen::Matrix4f& world_to_cam,
-						const float depth_scale)
+void integrateTsdfVolume(const DeviceArray2D<unsigned short>& depth_map, DeviceArray2D<float>& tsdf_volume, DeviceArray2D<float>& weight_volume, const Eigen::Vector3i& dims, const float voxel_length,
+						 const float truncated_distance, const CameraIntrinsicCuda& cam_params, const Eigen::Matrix4f& world_to_cam, const float depth_scale)
 {
 	const int num_blocks_x = DIV_CEILING(dims(0), THREAD_3D_UNIT);
 	const int num_blocks_y = DIV_CEILING(dims(1), THREAD_3D_UNIT);
@@ -93,12 +89,7 @@ void integrateTsdfVolume(const DeviceArray2D<unsigned short>& depth_map, DeviceA
 	const dim3 blocks(num_blocks_x, num_blocks_y, num_blocks_z);
 	const dim3 threads(THREAD_3D_UNIT, THREAD_3D_UNIT, THREAD_3D_UNIT);
 
-
-
-
-	integrateKernel<<<blocks, threads>>>(depth_map, tsdf_volume, weight_volume, 
-		dims, voxel_length, depth_scale, cam_params,
-		 truncated_distance, world_to_cam);
+	integrateKernel<<<blocks, threads>>>(depth_map, tsdf_volume, weight_volume, dims, voxel_length, depth_scale, cam_params, truncated_distance, world_to_cam);
 	CheckCuda(cudaDeviceSynchronize());
 	CheckCuda(cudaGetLastError());
 }
