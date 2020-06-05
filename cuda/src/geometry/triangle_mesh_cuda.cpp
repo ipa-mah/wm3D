@@ -35,13 +35,13 @@ void TriangleMeshCuda::upload(const open3d::geometry::TriangleMesh& mesh)
 	{
 		vertices[i] = Eigen::Vector3f(mesh.vertices_[i](0), mesh.vertices_[i](1), mesh.vertices_[i](2));
 	}
-	gpu_vertices_.upload(vertices);
+	vertices_.upload(vertices);
 	// upload triangles to gpu
 	for (size_t i = 0; i < mesh.triangles_.size(); ++i)
 	{
 		triangles[i] = Eigen::Vector3i(mesh.triangles_[i](0), mesh.triangles_[i](1), mesh.triangles_[i](2));
 	}
-	gpu_triangles_.upload(triangles);
+	triangles_.upload(triangles);
 
 	if (mesh.HasVertexNormals())
 	{
@@ -50,7 +50,18 @@ void TriangleMeshCuda::upload(const open3d::geometry::TriangleMesh& mesh)
 		{
 			vertex_normals[i] = Eigen::Vector3f(mesh.vertex_normals_[i](0), mesh.vertex_normals_[i](1), mesh.vertex_normals_[i](2));
 		}
-		gpu_normals_.upload(vertex_normals);
+		normals_.upload(vertex_normals);
 	}
+}
+void TriangleMeshCuda::release()
+{
+	triangles_.release();
+	vertices_.release();
+	normals_.release();
+	vertex_colors_.release();
+
+	device_ = nullptr;
+	max_triangles_ = -1;
+	max_vertices_ = -1;
 }
 }  // namespace cuda

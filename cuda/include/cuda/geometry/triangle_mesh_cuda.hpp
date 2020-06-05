@@ -11,10 +11,10 @@ namespace cuda
 class TriangleMeshCudaDevice
 {
   public:
-	cv::cuda::PtrStepSz<Eigen::Vector3f> vertices_;
-	cv::cuda::PtrStepSz<Eigen::Vector3f> normals_;
-	cv::cuda::PtrStepSz<Eigen::Vector3f> vertex_colors_;
-	cv::cuda::PtrStepSz<Eigen::Vector3i> triangles_;
+	PtrStepSz<Eigen::Vector3f> vertices_;
+	PtrStepSz<Eigen::Vector3f> normals_;
+	PtrStepSz<Eigen::Vector3f> vertex_colors_;
+	PtrStepSz<Eigen::Vector3i> triangles_;
 
   public:
 	int max_vertices_;
@@ -30,10 +30,10 @@ class TriangleMeshCuda
 {
   public:
 	TriangleMeshCudaDevice::Ptr device_ = nullptr;
-	DeviceArray<Eigen::Vector3f> gpu_vertices_;
-	DeviceArray<Eigen::Vector3f> gpu_normals_;
-	DeviceArray<Eigen::Vector3f> gpu_vertex_colors_;
-	DeviceArray<Eigen::Vector3i> gpu_triangles_;
+	DeviceArray<Eigen::Vector3f> vertices_;
+	DeviceArray<Eigen::Vector3f> normals_;
+	DeviceArray<Eigen::Vector3f> vertex_colors_;
+	DeviceArray<Eigen::Vector3i> triangles_;
 
   public:
 	int max_vertices_;

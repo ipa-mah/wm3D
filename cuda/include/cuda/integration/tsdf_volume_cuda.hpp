@@ -45,7 +45,12 @@ class TSDFVolumeCuda
 
   public:
 	void initializeVolume();
-	void integrateTsdfVolume(const DeviceArray2D<unsigned short>& depth_map, const CameraIntrinsicCuda& cam_params, const Eigen::Matrix4f& world_to_cam, const float depth_scale);
+	void integrateTsdfVolume(const DeviceArray2D<unsigned short>& depth_map, 
+					const CameraIntrinsicCuda& cam_params, const Eigen::Matrix4f& world_to_cam, 
+				const float depth_scale);
+	void rayCasting(DeviceArray2D<float3>& model_vertex,DeviceArray2D<float3>& model_normal, 
+					const CameraIntrinsicCuda& cam_params,
+					const Eigen::Matrix4f& cam_to_world,const float ray_step);
 };
 
 }  // namespace cuda

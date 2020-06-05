@@ -20,5 +20,6 @@ void integrateTsdfVolume(const cv::cuda::GpuMat& depth_map, cv::cuda::GpuMat& ts
 						 const float truncated_distance, const CameraIntrinsicCuda& cam_params, const Eigen::Matrix4f world_to_cam, const float depth_scale);
 
 void testTriangleMeshCuda(DeviceArray<Eigen::Vector3f>& vertices);
+void createRenderMap(const DeviceArray2D<float3>& normals, DeviceArray2D<uchar3>& render_image);
 
 }  // namespace cuda

@@ -78,8 +78,12 @@
         "__string": "cpp",
         "__locale": "cpp",
         "ios": "cpp",
-        "core": "cpp"
+        "core": "cpp",
+        "__bit_reference": "cpp",
+        "*.expression": "cpp",
+        "fft": "cpp"
     },
     "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
-    "python.pythonPath": "/home/ipa-mah/anaconda3/envs/pytorch_env/bin/python"
+    "python.pythonPath": "/home/ipa-mah/anaconda3/envs/pytorch_env/bin/python",
+    "C_Cpp.errorSquiggles": "Disabled"
 }

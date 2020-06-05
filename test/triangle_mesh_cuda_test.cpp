@@ -14,6 +14,10 @@
 
 int main()
 {
+	Eigen::Vector3i ret(512,512,512);
+	Eigen::Vector3f res = (ret - Eigen::Vector3i(1,1,1)).cast<float>() * 0.5;
+	std::cout<<res<<std::endl;
+	/*
 	std::string mesh_file = "/home/ipa-mah/1_projects/wm3D/data/texture_model.obj";
 	open3d::geometry::TriangleMesh mesh;
 	open3d::io::ReadTriangleMeshFromOBJ(mesh_file, mesh, true);
@@ -23,12 +27,13 @@ int main()
 	std::vector<Eigen::Vector3f> ver;
 	for (size_t i = 0; i < mesh.vertices_.size(); i++)
 	{
-		/* code */
+
 		Eigen::Vector3f v = mesh.vertices_[i].cast<float>();
 		ver.push_back(v);
 	}
 
 	devices.upload(ver);
 	cuda::testTriangleMeshCuda(devices);
+	*/
 	return 0;
 }

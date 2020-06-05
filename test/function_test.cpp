@@ -28,7 +28,7 @@ int main()
 	std::cout << "Read RGBD frames" << std::endl;
 	std::vector<cv::Mat> color_images(num_views), depth_images(num_views);
 	std::vector<Eigen::Matrix4d> cam2worlds(num_views);
-	// num_views -= 840;
+	 //num_views -= 800;
 	Eigen::Vector3i dims(512, 512, 512);
 	float voxel_length = 0.001;
 	float sdf_trunc = voxel_length * 5;
@@ -40,8 +40,11 @@ int main()
 	cuda::CameraIntrinsicCuda intrins(cam_param.cast<float>(), image_width, image_height);
 	DeviceArray2D<uchar3> color_image_cuda;
 	DeviceArray2D<ushort> depth_image_cuda;
+	DeviceArray2D<float3> model_normal,model_vertex;
+	DeviceArray2D<uchar3> render_normal;
 	color_image_cuda.create(image_height, image_width);
-	depth_image_cuda.create(image_height, image_width);
+	depth_image_cuda.create(image_height, image_width);	
+	render_normal.create(image_height,image_width);
 	cuda::TSDFVolumeCuda::Ptr volume = std::make_shared<cuda::TSDFVolumeCuda>(dims, voxel_length, sdf_trunc);
 
 	for (int frame_idx = 0; frame_idx < num_views; frame_idx++)
@@ -69,12 +72,28 @@ int main()
 			}
 		}
 		pose_f.close();
-		color_image_cuda.upload(color.data, color.step, color.rows, color.cols);
-		depth_image_cuda.upload(depth.data, depth.step, depth.rows, depth.cols);
-		volume->integrateTsdfVolume(depth_image_cuda, intrins, cam2worlds[frame_idx].cast<float>().inverse(), 0.001);
 	}
+	std::cout<<"ok"<<std::endl;
+	cv::Mat ray_cast(image_height,image_width,CV_8UC3);
+	for (size_t frame_idx = 0;frame_idx < num_views; frame_idx++)
+	{
+		
+		color_image_cuda.upload(color_images[frame_idx].data, color_images[frame_idx].step,
+								 color_images[frame_idx].rows, color_images[frame_idx].cols);
+		depth_image_cuda.upload(depth_images[frame_idx].data, depth_images[frame_idx].step,
+								 depth_images[frame_idx].rows, depth_images[frame_idx].cols);
+		volume->integrateTsdfVolume(depth_image_cuda, intrins, cam2worlds[frame_idx].cast<float>().inverse(), 0.001);
+		volume->rayCasting(model_vertex,model_normal,intrins,cam2worlds[frame_idx].cast<float>(),0.7);
+		cuda::createRenderMap(model_normal,render_normal);
+		render_normal.download(ray_cast.ptr<void>(),ray_cast.step);
+		cv::namedWindow("image",CV_WINDOW_NORMAL);
+		cv::imshow("image",ray_cast);
+		cv::waitKey(12);
+	}
+	
+	cv::destroyAllWindows();
 	std::cout << "tsdf" << std::endl;
-
+	/*
 	Eigen::Vector3d crop_min(0.03, 0.03, 0.009);
 	Eigen::Vector3d crop_max(0.399, 0.285, 0.4);
 	TSDFVolume::Ptr surface = std::make_shared<TSDFVolume>(dims, 0.001);
@@ -82,6 +101,6 @@ int main()
 	std::cout << "extract mesh" << std::endl;
 	pcl::PolygonMesh mesh = surface->extractMesh(crop_min, crop_max);
 	pcl::io::savePLYFile("mesh0.ply", mesh);
-
+	*/
 	return 0;
 }
