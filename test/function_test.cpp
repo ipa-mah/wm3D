@@ -28,7 +28,7 @@ int main()
 	std::cout << "Read RGBD frames" << std::endl;
 	std::vector<cv::Mat> color_images(num_views), depth_images(num_views);
 	std::vector<Eigen::Matrix4d> cam2worlds(num_views);
-	 //num_views -= 800;
+	num_views -= 800;
 	Eigen::Vector3i dims(512, 512, 512);
 	float voxel_length = 0.001;
 	float sdf_trunc = voxel_length * 5;
@@ -93,6 +93,13 @@ int main()
 	
 	cv::destroyAllWindows();
 	std::cout << "tsdf" << std::endl;
+	
+	DeviceArray2D<Eigen::Vector3i> vertex_indices;
+	DeviceArray2D<int> table_indices;
+	vertex_indices.create(dims(2) * dims(1), dims(0));
+	table_indices.create(dims(2) * dims(1), dims(0));
+	cuda::allocateVertexHost(volume->tsdf_volume_,volume->weight_volume_,vertex_indices,table_indices,
+									dims);
 	/*
 	Eigen::Vector3d crop_min(0.03, 0.03, 0.009);
 	Eigen::Vector3d crop_max(0.399, 0.285, 0.4);

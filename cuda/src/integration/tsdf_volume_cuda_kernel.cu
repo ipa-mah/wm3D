@@ -1,4 +1,3 @@
-#include <cuda/common/utils_cuda.hpp>
 #include <cuda/integration/tsdf_volume_cuda.hpp>
 #include <cuda/common/operators.cuh>
 namespace cuda
