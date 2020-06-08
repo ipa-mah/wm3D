@@ -24,4 +24,5 @@ void createRenderMap(const DeviceArray2D<float3>& normals, DeviceArray2D<uchar3>
 void allocateVertexHost(const DeviceArray2D<float>& tsdf_volume, const DeviceArray2D<float>& weight_volume,
     DeviceArray2D<Eigen::Vector3i>& vertex_indices, DeviceArray2D<int>& table_indices,
     const Eigen::Vector3i& dims );
+void hostAddDevice(int * vector_add, const int n, const int a);
 }  // namespace cuda

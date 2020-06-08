@@ -13,6 +13,47 @@
 #include <tuple>
 namespace cuda
 {
+class TSDFVolumeDevice 
+{
+public:
+	PtrStepSz<float> tsdf_volume_;
+	PtrStepSz<float> weight_volume_;
+
+	int res_;
+	float voxel_length_;
+	float inv_voxel_lenth_;
+	float sdf_trunc_;
+	Eigen::Matrix4f volume_to_world_;
+	Eigen::Matrix4f world_to_volume_;
+
+public:
+	__DEVICE__ inline float &tsdf_val(const Eigen::Vector3i& idx)
+	{
+		return tsdf_volume_.ptr(idx(2) * res_ + idx(1))[idx(0)];
+	}
+	__DEVICE__ inline float &weight_val(const Eigen::Vector3i& idx)
+	{
+		return weight_volume_.ptr(idx(2) * res_ + idx(1))[idx(0)];
+	}
+
+    /** Voxel level gradient -- NO trilinear interpolation.
+     * This is especially useful for MarchingCubes **/
+    __DEVICE__ Eigen::Vector3f gradient(const Eigen::Vector3i &idx);
+public:
+	__DEVICE__ void integrate(const Eigen::Vector3i& voxel_idx,const PtrStepSz<unsigned short>& depth_image, 
+							 	const CameraIntrinsicCuda& cam_params, const Eigen::Matrix4f& world_to_cam, 
+								const float depth_scale);
+	__DEVICE__ Eigen::Vector3f rayCasting(const Eigen::Vector2i& p,const CameraIntrinsicCuda& cam_params,
+					const Eigen::Matrix4f& cam_to_world,const float ray_step);						
+
+};
+
+// class TestTSDFVolume
+// {
+
+// };
+
+
 /// TSDF host class
 class TSDFVolumeCuda
 {
@@ -22,7 +63,7 @@ class TSDFVolumeCuda
 	// DeviceArray2D<uchar3*> color_;
 
   public:
-	Eigen::Vector3i dims_;
+	int res_;
 	float voxel_length_;
 	float inv_voxel_length_;
 	float sdf_trunc_;
@@ -33,12 +74,12 @@ class TSDFVolumeCuda
 	using Ptr = std::shared_ptr<TSDFVolumeCuda>;
 	using ConstPtr = std::shared_ptr<const TSDFVolumeCuda>;
 	TSDFVolumeCuda();
-	TSDFVolumeCuda(Eigen::Vector3i dims, float voxel_length, float sdf_trunc);
+	TSDFVolumeCuda(int res, float voxel_length, float sdf_trunc);
 	TSDFVolumeCuda(const TSDFVolumeCuda& other);
 	TSDFVolumeCuda& operator=(const TSDFVolumeCuda& other);
 	~TSDFVolumeCuda();
 
-	void create(const Eigen::Vector3i& dims, const float voxel_length, const float sdf_trunc);
+	void create(const int res, const float voxel_length, const float sdf_trunc);
 	void release();
 
 	std::tuple<std::vector<float>, std::vector<float>, std::vector<Eigen::Vector3i>> downloadVolume();

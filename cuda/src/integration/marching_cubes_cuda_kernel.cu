@@ -3,7 +3,39 @@
 #include <cuda/integration/marching_cubes_table_cuda.hpp>
 static const int VERTEX_TO_ALLOCATE = -1;
 namespace cuda {
+/*
+__device__ Eigen::Vector3f gradient(const PtrStepSz<float> tsdf_volume, const PtrStepSz<float> weight_volume,
+                            const Eigen::Vector3i &idx, const int resolution) {
+        Eigen::Vector3f n = Eigen::Vector3f::Zeros();
+        Eigen::Vector3i idx1 = idx, idx0 = idx;
+    
+    #pragma unroll 1
+        for (size_t k = 0; k < 3; ++k) {
+            idx1(k) = WM3D_MIN(idx(k) + 1, resolution - 1);
+            idx0(k) = WM3D_MAX(idx(k) - 1, 0);
+            
+            // if (weight_[IndexOf(X1)] != 0 && weight_[IndexOf(X0)] != 0) {
+            //     n(k) = tsdf_[IndexOf(X1)] - tsdf_[IndexOf(X0)];
+            //     n(k) *= 0.5;
+            // } else if (weight_[IndexOf(X1)] != 0) {
+            //     n(k) = tsdf_[IndexOf(X1)] - tsdf_[IndexOf(X)];
+            // } else if (weight_[IndexOf(X0)] != 0) {
+            //     n(k) = tsdf_[IndexOf(X)] - tsdf_[IndexOf(X0)];
+            // } else {
+            //     n(k) = 0;
+            // }
+            
+            if(weight_volume.ptr(idx1(2) * resolution + idx1(1))[idx1(0)] != 0 &&
+            weight_volume.ptr(idx0(2) * resolution + idx0(1))[idx0(0)] !=0 )
+            {
+                n(k) = tsdf_volume.ptr()
+            }
 
+            X1(k) = X0(k) = X(k);
+        }
+        return n;
+    }
+*/
 __global__ void allocateVertexKernel(const PtrStepSz<float> tsdf_volume, const PtrStepSz<float> weight_volume,
                                 PtrStepSz<Eigen::Vector3i> vertex_indices, 
                                 PtrStepSz<int> table_indices,

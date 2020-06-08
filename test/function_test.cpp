@@ -29,13 +29,13 @@ int main()
 	std::vector<cv::Mat> color_images(num_views), depth_images(num_views);
 	std::vector<Eigen::Matrix4d> cam2worlds(num_views);
 	num_views -= 800;
-	Eigen::Vector3i dims(512, 512, 512);
+	int resolution = 512;
 	float voxel_length = 0.001;
 	float sdf_trunc = voxel_length * 5;
 	std::cout << "num views: " << num_views << std::endl;
 	std::cout << "voxel_length: " << voxel_length << std::endl;
 	std::cout << "sdf_trunc: " << sdf_trunc << std::endl;
-	std::cout << "dims: " << dims << std::endl;
+	std::cout << "resolution: " << resolution << std::endl;
 
 	cuda::CameraIntrinsicCuda intrins(cam_param.cast<float>(), image_width, image_height);
 	DeviceArray2D<uchar3> color_image_cuda;
@@ -45,7 +45,7 @@ int main()
 	color_image_cuda.create(image_height, image_width);
 	depth_image_cuda.create(image_height, image_width);	
 	render_normal.create(image_height,image_width);
-	cuda::TSDFVolumeCuda::Ptr volume = std::make_shared<cuda::TSDFVolumeCuda>(dims, voxel_length, sdf_trunc);
+	cuda::TSDFVolumeCuda::Ptr volume = std::make_shared<cuda::TSDFVolumeCuda>(resolution, voxel_length, sdf_trunc);
 
 	for (int frame_idx = 0; frame_idx < num_views; frame_idx++)
 	{
@@ -96,10 +96,10 @@ int main()
 	
 	DeviceArray2D<Eigen::Vector3i> vertex_indices;
 	DeviceArray2D<int> table_indices;
-	vertex_indices.create(dims(2) * dims(1), dims(0));
-	table_indices.create(dims(2) * dims(1), dims(0));
-	cuda::allocateVertexHost(volume->tsdf_volume_,volume->weight_volume_,vertex_indices,table_indices,
-									dims);
+	vertex_indices.create(resolution * resolution, resolution);
+	table_indices.create(resolution * resolution, resolution);
+	// cuda::allocateVertexHost(volume->tsdf_volume_,volume->weight_volume_,vertex_indices,table_indices,
+	// 								dims);
 	/*
 	Eigen::Vector3d crop_min(0.03, 0.03, 0.009);
 	Eigen::Vector3d crop_max(0.399, 0.285, 0.4);

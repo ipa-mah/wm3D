@@ -145,8 +145,8 @@ add_executable(mesh_rgbd_rendering test/mesh_rgbd_rendering.cpp)
 target_link_libraries(mesh_rgbd_rendering ${PROJECT_NAME})
 
 
-#add_executable(opengl_test test/opengl_test.cpp)
-#target_link_libraries(opengl_test ${PROJECT_NAME})
+add_executable(cuda_test test/cuda_test.cpp)
+target_link_libraries(cuda_test wm3D_CUDA_MODULE ${PROJECT_NAME})
 #
 add_executable(function_test test/function_test.cpp)
 target_link_libraries(function_test wm3D_CUDA_MODULE ${PROJECT_NAME} )

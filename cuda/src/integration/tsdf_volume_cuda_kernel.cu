@@ -2,32 +2,33 @@
 #include <cuda/common/operators.cuh>
 namespace cuda
 {
-__global__ void initializeVolumeKernel(PtrStepSz<float> tsdf_volume, PtrStepSz<float> weight_volume, const Eigen::Vector3i dims)
+__global__ void initializeVolumeKernel(PtrStepSz<float> tsdf_volume, PtrStepSz<float> weight_volume, 
+              const int res)
 {
 	int x = threadIdx.x + blockIdx.x * blockDim.x;
 	int y = threadIdx.y + blockIdx.y * blockDim.y;
 	int z = threadIdx.z + blockIdx.z * blockDim.z;
-	if (x >= dims(0) || y >= dims(1) || z >= dims(2)) return;
+	if (x >= res || y >= res || z >= res) return;
 
-	tsdf_volume.ptr(z * dims(1) + y)[x] = 0.0;
-	weight_volume.ptr(z * dims(1) + y)[x] = 0.0;
+	tsdf_volume.ptr(z * res + y)[x] = 0.0;
+	weight_volume.ptr(z * res + y)[x] = 0.0;
 }
 void TSDFVolumeCuda::initializeVolume()
 {
-	const int num_blocks_x = DIV_CEILING(dims_(0), THREAD_3D_UNIT);
-	const int num_blocks_y = DIV_CEILING(dims_(1), THREAD_3D_UNIT);
-	const int num_blocks_z = DIV_CEILING(dims_(2), THREAD_3D_UNIT);
+	const int num_blocks_x = DIV_CEILING(res_, THREAD_3D_UNIT);
+	const int num_blocks_y = DIV_CEILING(res_, THREAD_3D_UNIT);
+	const int num_blocks_z = DIV_CEILING(res_, THREAD_3D_UNIT);
 	const dim3 blocks(num_blocks_x, num_blocks_y, num_blocks_z);
 	const dim3 threads(THREAD_3D_UNIT, THREAD_3D_UNIT, THREAD_3D_UNIT);
 
-	initializeVolumeKernel<<<blocks, threads>>>(tsdf_volume_, weight_volume_, dims_);
+	initializeVolumeKernel<<<blocks, threads>>>(tsdf_volume_, weight_volume_, res_);
 	CheckCuda(cudaDeviceSynchronize());
 	CheckCuda(cudaGetLastError());
 }
 
 __global__ void integrateKernel(const PtrStepSz<unsigned short> depth_image,
 					 PtrStepSz<float> tsdf_volume, PtrStepSz<float> weight_volume,
-					  			const Eigen::Vector3i dims, float voxel_length,
+					  			const int res, float voxel_length,
 								const float depth_scale, 
 								const CameraIntrinsicCuda cam_params,
 								const float truncation_distance, 
@@ -37,7 +38,7 @@ __global__ void integrateKernel(const PtrStepSz<unsigned short> depth_image,
 	const int y = blockIdx.y * blockDim.y + threadIdx.y;
 	const int z = blockIdx.z * blockDim.z + threadIdx.z;
 
-	if (x >= dims(0) || y >= dims(1) || z >= dims(2)) return;
+	if (x >= res || y >= res || z >= res) return;
 
 	// Convert to voxel grid to global coordinate
 
@@ -58,8 +59,8 @@ __global__ void integrateKernel(const PtrStepSz<unsigned short> depth_image,
 	{
 		const float new_tsdf = fmin(1.f, sdf / truncation_distance);
 
-		const float current_tsdf = tsdf_volume.ptr(z * dims(1) + y)[x];
-		const short current_weight = weight_volume.ptr(z * dims(1) + y)[x];
+		const float current_tsdf = tsdf_volume.ptr(z * res + y)[x];
+		const short current_weight = weight_volume.ptr(z * res + y)[x];
 
 		const float add_weight = 1;
 		const float updated_tsdf = (current_weight * current_tsdf + add_weight * new_tsdf) / (current_weight + add_weight);
@@ -67,20 +68,21 @@ __global__ void integrateKernel(const PtrStepSz<unsigned short> depth_image,
 		const float new_weight = current_weight + add_weight;
 		// const float new_weight = min(current_weight + add_weight, 128.0f);
 
-		tsdf_volume.ptr(z * dims(1) + y)[x] = updated_tsdf;
-		weight_volume.ptr(z * dims(1) + y)[x] = new_weight;
+		tsdf_volume.ptr(z * res + y)[x] = updated_tsdf;
+		weight_volume.ptr(z * res + y)[x] = new_weight;
 	}
 }
 
-void TSDFVolumeCuda::integrateTsdfVolume(const DeviceArray2D<unsigned short>& depth_map, const CameraIntrinsicCuda& cam_params, const Eigen::Matrix4f& world_to_cam, const float depth_scale)
+void TSDFVolumeCuda::integrateTsdfVolume(const DeviceArray2D<unsigned short>& depth_map, 
+  const CameraIntrinsicCuda& cam_params, const Eigen::Matrix4f& world_to_cam, const float depth_scale)
 {
-	const int num_blocks_x = DIV_CEILING(dims_(0), THREAD_3D_UNIT);
-	const int num_blocks_y = DIV_CEILING(dims_(1), THREAD_3D_UNIT);
-	const int num_blocks_z = DIV_CEILING(dims_(2), THREAD_3D_UNIT);
+	const int num_blocks_x = DIV_CEILING(res_, THREAD_3D_UNIT);
+	const int num_blocks_y = DIV_CEILING(res_, THREAD_3D_UNIT);
+	const int num_blocks_z = DIV_CEILING(res_, THREAD_3D_UNIT);
 	const dim3 blocks(num_blocks_x, num_blocks_y, num_blocks_z);
 	const dim3 threads(THREAD_3D_UNIT, THREAD_3D_UNIT, THREAD_3D_UNIT);
 
-	integrateKernel<<<blocks, threads>>>(depth_map, tsdf_volume_, weight_volume_, dims_, voxel_length_, depth_scale, cam_params, sdf_trunc_, world_to_cam);
+	integrateKernel<<<blocks, threads>>>(depth_map, tsdf_volume_, weight_volume_, res_, voxel_length_, depth_scale, cam_params, sdf_trunc_, world_to_cam);
 	CheckCuda(cudaDeviceSynchronize());
 	CheckCuda(cudaGetLastError());
 }
@@ -282,7 +284,7 @@ void TSDFVolumeCuda::rayCasting(DeviceArray2D<float3>& model_vertex,
 	const dim3 threads(THREAD_2D_UNIT, THREAD_2D_UNIT);
 
 
-  kernelRayCasting<<<blocks,threads>>>(tsdf_volume_,model_vertex,model_normal,dims_(0),
+  kernelRayCasting<<<blocks,threads>>>(tsdf_volume_,model_vertex,model_normal,res_,
                                    voxel_length_,intrins,sdf_trunc_, ray_step,
                                    cam_to_world_rot,cam_to_world_trans);
 
@@ -290,6 +292,118 @@ void TSDFVolumeCuda::rayCasting(DeviceArray2D<float3>& model_vertex,
 	CheckCuda(cudaGetLastError());
 }
 
+
+class AddDevice
+{
+public:
+  AddDevice(const int a);
+  int a_;
+  
+  __device__ __forceinline__ 
+  void operator()(int * vector_add, const int n) const 
+  {
+    int idx = threadIdx.x + blockIdx.x * blockDim.x;
+    if(idx >= n) return;
+    vector_add[idx] += a_;
+  }
+};
+
+inline AddDevice::AddDevice(const int a) : a_(a) 
+{  
+}
+
+__global__ void print_device_kernel(const AddDevice device , int* vector_add, const int n)
+{
+  device(vector_add,n);
+};
+
+void hostAddDevice(int * vector_add, const int n, const int a)
+{
+  AddDevice device(a);
+  const dim3 blocks(DIV_CEILING(n,THREAD_1D_UNIT));
+  const dim3 threads(THREAD_1D_UNIT);
+  print_device_kernel<<<blocks,threads>>>(device,vector_add,n);
+  CheckCuda(cudaDeviceSynchronize());
+	CheckCuda(cudaGetLastError());
+}
+/////////////////////////////////////////////////////////////////////////////////////////////
+
+
+__device__ Eigen::Vector3f TSDFVolumeDevice::gradient(const Eigen::Vector3i &idx)
+{
+  Eigen::Vector3f n = Eigen::Vector3f::Zero();
+  Eigen::Vector3i idx1 = idx, idx0 = idx;
+
+#pragma unroll 1
+  for(size_t k = 0 ; k < 3 ; k ++)
+  {
+      idx1(k) = WM3D_MIN(idx(k) + 1, res_ - 1);
+      idx0(k) = WM3D_MAX(idx(k) - 1, 0);
+         if(weight_val(idx1) != 0 && weight_val(idx0) != 0)
+         {
+            n(k) = tsdf_val(idx1) - tsdf_val(idx0);
+            n(k) *= 0.5;
+         } 
+         else if(weight_val(idx1) != 0)
+         {
+          n(k) = tsdf_val(idx1) - tsdf_val(idx);
+         }
+         else if (weight_val(idx0) != 0)
+         {
+           n(k) =  tsdf_val(idx) - tsdf_val(idx0);
+         }
+         else
+         {
+           n(k) = 0;
+         }
+         idx1(k) = idx0(k) = idx(k);
+
+  }
+  return n;
+
+}
+
+__device__ void TSDFVolumeDevice::integrate(const Eigen::Vector3i& voxel_idx,
+        const PtrStepSz<unsigned short>& depth_image, 
+        const CameraIntrinsicCuda& cam_params, const Eigen::Matrix4f& world_to_cam, 
+        const float depth_scale)
+ {
+
+// Convert to voxel grid to global coordinate
+const float3 global_voxel = make_float3((static_cast<float>(voxel_idx(0)) + 0.5f) * voxel_length_, 
+                                        (static_cast<float>(voxel_idx(1)) + 0.5f) * voxel_length_, 
+                                        (static_cast<float>(voxel_idx(2)) + 0.5f) * voxel_length_);
+// convert voxel from global to local camera coordinate
+const Eigen::Vector3f camera_voxel = (world_to_cam * Eigen::Vector4f(global_voxel.x, global_voxel.y, global_voxel.z, 1.0)).head<3>();
+if (camera_voxel(2) <= 0) return;
+	// projection
+  const int2 uv = make_int2(__float2int_rn(camera_voxel(0) / camera_voxel(2) * cam_params.fx_ + cam_params.cx_),
+                           __float2int_rn(camera_voxel(1) / camera_voxel(2) * cam_params.fy_ + cam_params.cy_));
+	if (uv.x < 0 || uv.x >= depth_image.cols || uv.y < 0 || uv.y >= depth_image.rows) return;
+
+	const float depth = depth_image.ptr(uv.y)[uv.x] * depth_scale;
+
+	if (depth <= 0.0001 || depth > 5.0) return;
+	const float sdf = (depth - camera_voxel(2));
+	if (sdf >= -sdf_trunc_)
+	{
+		const float new_tsdf = fmin(1.f, sdf / sdf_trunc_);
+
+		const float current_tsdf = tsdf_volume_.ptr(voxel_idx(2) * res_ + voxel_idx(1))[voxel_idx(0)];
+		const short current_weight = weight_volume_.ptr(voxel_idx(2) * res_ + voxel_idx(1))[voxel_idx(0)];
+
+		const float add_weight = 1;
+		const float updated_tsdf = (current_weight * current_tsdf + add_weight * new_tsdf) / (current_weight + add_weight);
+
+		const float new_weight = current_weight + add_weight;
+		// const float new_weight = min(current_weight + add_weight, 128.0f);
+
+		tsdf_volume_.ptr(voxel_idx(2) * res_ + voxel_idx(1))[voxel_idx(0)] = updated_tsdf;
+		weight_volume_.ptr(voxel_idx(2) * res_ + voxel_idx(1))[voxel_idx(0)] = new_weight;
+	}
+
+
+ }
 
 
 }  // namespace cuda
