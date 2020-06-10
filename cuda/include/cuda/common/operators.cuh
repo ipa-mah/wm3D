@@ -41,21 +41,38 @@
 #include <eigen3/Eigen/Dense>
 #define DIVISOR 32767
 
- template<typename T> struct numeric_limits;
+template <typename T>
+struct numeric_limits;
 
-        template<> struct numeric_limits<float>
-        {
-            __device__ static float quiet_NaN() { return __int_as_float(0x7fffffff); /*CUDART_NAN_F*/ };
-            __device__ static float epsilon() { return 1.192092896e-07f/*FLT_EPSILON*/; };
-            __device__ static float min() { return 1.175494351e-38f/*FLT_MIN*/; };
-            __device__ static float max() { return 3.402823466e+38f/*FLT_MAX*/; };
-        };
+template <>
+struct numeric_limits<float>
+{
+	__device__ static float quiet_NaN()
+	{
+		return __int_as_float(0x7fffffff); /*CUDART_NAN_F*/
+	};
+	__device__ static float epsilon()
+	{
+		return 1.192092896e-07f /*FLT_EPSILON*/;
+	};
+	__device__ static float min()
+	{
+		return 1.175494351e-38f /*FLT_MIN*/;
+	};
+	__device__ static float max()
+	{
+		return 3.402823466e+38f /*FLT_MAX*/;
+	};
+};
 
-        template<> struct numeric_limits<unsigned short>
-        {
-            __device__ static unsigned short max() { return USHRT_MAX; };
-        };
-
+template <>
+struct numeric_limits<unsigned short>
+{
+	__device__ static unsigned short max()
+	{
+		return USHRT_MAX;
+	};
+};
 
 #define COMPOUND_VEC3_OP(type, scalar, op)                                          \
 	__device__ __host__ __forceinline__ type& operator op(type& v1, const type& v2) \

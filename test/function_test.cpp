@@ -40,11 +40,11 @@ int main()
 	cuda::CameraIntrinsicCuda intrins(cam_param.cast<float>(), image_width, image_height);
 	DeviceArray2D<uchar3> color_image_cuda;
 	DeviceArray2D<ushort> depth_image_cuda;
-	DeviceArray2D<float3> model_normal,model_vertex;
+	DeviceArray2D<float3> model_normal, model_vertex;
 	DeviceArray2D<uchar3> render_normal;
 	color_image_cuda.create(image_height, image_width);
-	depth_image_cuda.create(image_height, image_width);	
-	render_normal.create(image_height,image_width);
+	depth_image_cuda.create(image_height, image_width);
+	render_normal.create(image_height, image_width);
 	cuda::TSDFVolumeCuda::Ptr volume = std::make_shared<cuda::TSDFVolumeCuda>(resolution, voxel_length, sdf_trunc);
 
 	for (int frame_idx = 0; frame_idx < num_views; frame_idx++)
@@ -73,27 +73,24 @@ int main()
 		}
 		pose_f.close();
 	}
-	std::cout<<"ok"<<std::endl;
-	cv::Mat ray_cast(image_height,image_width,CV_8UC3);
-	for (size_t frame_idx = 0;frame_idx < num_views; frame_idx++)
+	std::cout << "ok" << std::endl;
+	cv::Mat ray_cast(image_height, image_width, CV_8UC3);
+	for (size_t frame_idx = 0; frame_idx < num_views; frame_idx++)
 	{
-		
-		color_image_cuda.upload(color_images[frame_idx].data, color_images[frame_idx].step,
-								 color_images[frame_idx].rows, color_images[frame_idx].cols);
-		depth_image_cuda.upload(depth_images[frame_idx].data, depth_images[frame_idx].step,
-								 depth_images[frame_idx].rows, depth_images[frame_idx].cols);
+		color_image_cuda.upload(color_images[frame_idx].data, color_images[frame_idx].step, color_images[frame_idx].rows, color_images[frame_idx].cols);
+		depth_image_cuda.upload(depth_images[frame_idx].data, depth_images[frame_idx].step, depth_images[frame_idx].rows, depth_images[frame_idx].cols);
 		volume->integrateTsdfVolume(depth_image_cuda, intrins, cam2worlds[frame_idx].cast<float>().inverse(), 0.001);
-		volume->rayCasting(model_vertex,model_normal,intrins,cam2worlds[frame_idx].cast<float>(),0.7);
-		cuda::createRenderMap(model_normal,render_normal);
-		render_normal.download(ray_cast.ptr<void>(),ray_cast.step);
-		cv::namedWindow("image",CV_WINDOW_NORMAL);
-		cv::imshow("image",ray_cast);
+		volume->rayCasting(model_vertex, model_normal, intrins, cam2worlds[frame_idx].cast<float>(), 0.7);
+		cuda::createRenderMap(model_normal, render_normal);
+		render_normal.download(ray_cast.ptr<void>(), ray_cast.step);
+		cv::namedWindow("image", CV_WINDOW_NORMAL);
+		cv::imshow("image", ray_cast);
 		cv::waitKey(12);
 	}
-	
+
 	cv::destroyAllWindows();
 	std::cout << "tsdf" << std::endl;
-	
+
 	DeviceArray2D<Eigen::Vector3i> vertex_indices;
 	DeviceArray2D<int> table_indices;
 	vertex_indices.create(resolution * resolution, resolution);

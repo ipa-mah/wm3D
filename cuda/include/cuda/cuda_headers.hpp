@@ -21,8 +21,7 @@ void integrateTsdfVolume(const cv::cuda::GpuMat& depth_map, cv::cuda::GpuMat& ts
 
 void testTriangleMeshCuda(DeviceArray<Eigen::Vector3f>& vertices);
 void createRenderMap(const DeviceArray2D<float3>& normals, DeviceArray2D<uchar3>& render_image);
-void allocateVertexHost(const DeviceArray2D<float>& tsdf_volume, const DeviceArray2D<float>& weight_volume,
-    DeviceArray2D<Eigen::Vector3i>& vertex_indices, DeviceArray2D<int>& table_indices,
-    const Eigen::Vector3i& dims );
-void hostAddDevice(int * vector_add, const int n, const int a);
+void allocateVertexHost(const DeviceArray2D<float>& tsdf_volume, const DeviceArray2D<float>& weight_volume, DeviceArray2D<Eigen::Vector3i>& vertex_indices, DeviceArray2D<int>& table_indices,
+						const Eigen::Vector3i& dims);
+void hostAddDevice(int* vector_add, const int n, const int a);
 }  // namespace cuda

@@ -5,17 +5,14 @@
 TSDFVolume::TSDFVolume(const Eigen::Vector3i& dims, const float voxel_length) : dims_(dims), voxel_length_(voxel_length)
 {
 }
-void TSDFVolume::downloadTsdfAndWeights(const DeviceArray2D<float>& device_tsdf,
-									 const DeviceArray2D<float>& device_weights)
+void TSDFVolume::downloadTsdfAndWeights(const DeviceArray2D<float>& device_tsdf, const DeviceArray2D<float>& device_weights)
 {
 	tsdf_.resize(dims_(0) * dims_(1) * dims_(2));
 	weights_.resize(dims_(0) * dims_(1) * dims_(2));
 	const size_t NNN = dims_(0) * dims_(1) * dims_(2);
-	CheckCuda(cudaMemcpy(tsdf_.data(), device_tsdf, sizeof(float) * NNN,
-                         cudaMemcpyDeviceToHost));
-    CheckCuda(cudaMemcpy(weights_.data(), device_weights, sizeof(float) * NNN,
-                         cudaMemcpyDeviceToHost));
-   
+	//CheckCuda(cudaMemcpy(tsdf_.data(), device_tsdf, sizeof(float) * NNN, cudaMemcpyDeviceToHost));
+	//CheckCuda(cudaMemcpy(weights_.data(), device_weights, sizeof(float) * NNN, cudaMemcpyDeviceToHost));
+
 	/*
 	tsdf_.assign(dims_(0) * dims_(1) * dims_(2), 0.0f);
 	weights_.assign(dims_(0) * dims_(1) * dims_(2), 0.0f);
@@ -42,9 +39,6 @@ void TSDFVolume::downloadTsdfAndWeights(const DeviceArray2D<float>& device_tsdf,
 		}
 	}
 	*/
-	
-
-
 }
 pcl::PolygonMesh TSDFVolume::extractMesh(const Eigen::Vector3d& crop_min, const Eigen::Vector3d& crop_max)
 {

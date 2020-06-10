@@ -290,6 +290,4 @@ void hostRayCasting(const DeviceArray2D<float>& tsdf_volume, DeviceArray2D<float
 }
 */
 
-
-
 }  // namespace cuda
