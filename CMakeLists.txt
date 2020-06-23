@@ -68,18 +68,21 @@ find_package(OpenGL REQUIRED)
 find_package(GLFW3 REQUIRED)
 
 find_package(Eigen3 REQUIRED)
-find_package(realsense2 REQUIRED )
+find_package(realsense2 2.32.1 REQUIRED)
+if(NOT realsense2_FOUND)
+    message(FATAL_ERROR "\n\n Intel RealSense SDK 2.0 is missing, please install it from https://github.com/IntelRealSense/librealsense/releases\n\n")
+endif()
+
 #Open3D
 
-find_package(Open3D HINTS ${CMAKE_INSTALL_PREFIX}/lib/CMake)
-list(APPEND Open3D_LIBRARIES dl)
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${Open3D_C_FLAGS}")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${Open3D_CXX_FLAGS}")
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${Open3D_EXE_LINKER_FLAGS}")
-
+find_package(Open3D HINTS ${CMAKE_INSTALL_PREFIX}/lib/cmake)
+#list(APPEND Open3D_LIBRARIES dl)
+#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${Open3D_C_FLAGS}")
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${Open3D_CXX_FLAGS}")
+#set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${Open3D_EXE_LINKER_FLAGS}")
+#link_directories(${Open3D_LIBRARY_DIRS})
 message(STATUS "Found Open3D ${Open3D_VERSION}")
 # link_directories must be before add_executable
-link_directories(${Open3D_LIBRARY_DIRS})
 
 # tinyobjectloader
 include(ExternalProject)
