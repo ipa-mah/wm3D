@@ -13,7 +13,7 @@ ViewControl::ViewControl(const Eigen::Matrix3d& intrins, const int vertical_view
 			int index = i * horizontal_views + j;
 
 			Eigen::Matrix4d extrinsic = Eigen::Matrix4d::Zero();
-
+			
 			double vertical_rad = vertical_angle_step * (i);
 			double horizontal_rad = horizontal_angle_step * (j);
 			double z = distance * sin(vertical_rad);
@@ -48,7 +48,7 @@ ViewControl::ViewControl(const Eigen::Matrix3d& intrins, const int vertical_view
 	// Get field of view
 	int height = (int)2.0 * (intrinsic_(1, 2) + 0.5);
 	int width = (int)2.0 * (intrinsic_(0, 2) + 0.5);
-
+	
 	double tan_half_fov = (double)height / (intrinsic_(1, 1) * 2.0);
 	double fov_rad = std::atan(tan_half_fov) * 2.0;
 	field_of_view_ = std::max(std::min(fov_rad * 180.0 / M_PI, FIELD_OF_VIEW_MAX), FIELD_OF_VIEW_MIN);

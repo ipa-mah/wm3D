@@ -86,6 +86,6 @@
         "locale": "cpp"
     },
     "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
-    "python.pythonPath": "/home/ipa-mah/anaconda3/envs/pytorch_env/bin/python",
+    "python.pythonPath": "/home/hah/anaconda3/envs/pytorch3d/bin/python",
     "C_Cpp.errorSquiggles": "Disabled"
 }
