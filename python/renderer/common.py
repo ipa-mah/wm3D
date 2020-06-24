@@ -1,6 +1,12 @@
 #!/usr/bin/env python3
 import os
 import yaml
+import numpy as np
+from easydict import EasyDict 
+
+def normalized(vector):
+	"""Normalize given vector to the length of 1"""
+	return vector / np.linalg.norm(vector)
 
 class Config:
     def __init__(self,config_file=''):
@@ -10,6 +16,9 @@ class Config:
         self.cy = 0
         self.image_height = 0
         self.image_width = 0
+        self.horizontal_views = 5
+        self.vertical_views = 5
+        self.distance = 0.5
         with open(config_file) as file:
             params = yaml.full_load(file)
             if 'fx' in params:
@@ -24,7 +33,11 @@ class Config:
                 self.image_width = params['image_width']
             if 'image_height' in params:
                 self.image_height = params['image_height']
-         
-class ViewControl:
-    def __init__(self,Config):
-        print("ok")
+            if 'horizontal_views' in params:
+                self.horizontal_views = params['horizontal_views']
+            if 'vertical_views' in params:
+                self.vertical_views = params['vertical_views']
+            if 'distance' in params:
+                self.distance = params['distance']
+            if 'batch_size' in params:
+                self.batch_size = params['batch_size']    

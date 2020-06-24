@@ -5,3 +5,7 @@ cx: 400
 cy: 300
 image_width: 640
 image_height: 480
+horizontal_views: 5
+vertical_views: 5
+distance: 2.7
+batch_size: 10
