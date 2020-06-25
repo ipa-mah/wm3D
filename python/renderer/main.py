@@ -42,72 +42,21 @@ if __name__ == "__main__":
 """
 obj_file = '/home/hah/wm3D/python/data/cow_mesh/cow.obj'
 config_file = '/home/hah/wm3D/python/config/rendering_config.yaml'
-
+output_path = '/home/hah/wm3D/data/'
 
 if __name__ == '__main__':
     cfg = Config(config_file)
-    renderer = TextureMeshRenderer('cuda:0',cfg.distance,cfg.batch_size)
+    renderer = TextureMeshRenderer('cuda:0')
     #renderer.set_phong_render([0.0,0.0,-3.0])
     renderer.load_obj_file(obj_file)
-    renderer.render([0.0,0.0,-3.0])
+    
+    #renderer.render_with_batch_size(cfg.batch_size,cfg.distance,[0.0,0.0,-3.0],output_path)
+    elev = 0
+    azim = 180
 
-"""
-# Setup
-device = torch.device("cuda:0")
-torch.cuda.set_device(device)
-
-mesh = load_objs_as_meshes([obj_file],device)
-textures = mesh.textures.maps_padded()
-lights = PointLights(device=device, location=[[0.0, 0.0, -3.0]])
-lights.location = torch.tensor([0.0, 0.0, +1.0], device=device)[None]
-R, T = look_at_view_transform(2.7, 0, 180) 
-cameras = OpenGLPerspectiveCameras(device=device, R=R, T=T)
-
-# Define the settings for rasterization and shading. Here we set the output image to be of size
-# 512x512. As we are rendering images for visualization purposes only we will set faces_per_pixel=1
-# and blur_radius=0.0. We also set bin_size and max_faces_per_bin to None which ensure that 
-# the faster coarse-to-fine rasterization method is used. Refer to rasterize_meshes.py for 
-# explanations of these parameters. Refer to docs/notes/renderer.md for an explanation of 
-# the difference between naive and coarse-to-fine rasterization. 
-raster_settings = RasterizationSettings(
-    image_size=512, 
-    blur_radius=0.0, 
-    faces_per_pixel=1, 
-)
-# Create a phong renderer by composing a rasterizer and a shader. The textured phong shader will 
-# interpolate the texture uv coordinates for each vertex, sample from a texture image and 
-# apply the Phong lighting model
-renderer = MeshRenderer(
-    rasterizer=MeshRasterizer(
-        cameras=cameras, 
-        raster_settings=raster_settings
-    ),
-    shader=TexturedSoftPhongShader(
-        device=device, 
-        cameras=cameras,
-        lights=lights
-    )
-)
-
-batch_size = 4
-meshes = mesh.extend(batch_size)
-# Get a batch of viewing angles. 
-elev = torch.linspace(0, 180, batch_size)
-azim = torch.linspace(-180, 180, batch_size)
-R, T = look_at_view_transform(dist=2.7, elev=elev, azim=azim)
-cameras = OpenGLPerspectiveCameras(device=device, R=R, T=T)
-lights.location = torch.tensor([[0.0, 0.0, -3.0]], device=device)
-images = renderer(meshes, cameras=cameras, lights=lights)
-
-plt.figure(figsize=(10, 10))
-plt.imshow(images[2][0, ..., :3].cpu().numpy())
-plt.grid("off");
-plt.axis("off");
-plt.show()
-#images = renderer(mesh, lights=lights)
-#plt.figure(figsize=(10, 10))
-#plt.imshow(images[0, ..., :3].cpu().numpy())
-#plt.grid("off");
-#plt.axis("off");
-#plt.show()
-"""
+#    renderer.render(cfg.distance,[0.0,0.0,-3.0],azim,elev,output_path+"render-image.png")
+    renderer.render_with_different_azim_elev_size(cfg.distance,
+                                        cfg.vertical_views,
+                                        cfg.horizontal_views,
+                                        [0.0,0.0,-3.0],output_path)
+    renderer.saveExtrinsics(output_path+"world_to_cam_poses.yaml")

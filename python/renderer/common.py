@@ -4,10 +4,6 @@ import yaml
 import numpy as np
 from easydict import EasyDict 
 
-def normalized(vector):
-	"""Normalize given vector to the length of 1"""
-	return vector / np.linalg.norm(vector)
-
 class Config:
     def __init__(self,config_file=''):
         self.fx = 0
@@ -41,3 +37,4 @@ class Config:
                 self.distance = params['distance']
             if 'batch_size' in params:
                 self.batch_size = params['batch_size']    
+
