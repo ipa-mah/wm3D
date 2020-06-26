@@ -47,7 +47,6 @@ output_path = '/home/hah/wm3D/data/'
 if __name__ == '__main__':
     cfg = Config(config_file)
     renderer = TextureMeshRenderer('cuda:0')
-    #renderer.set_phong_render([0.0,0.0,-3.0])
     renderer.load_obj_file(obj_file)
     
     #renderer.render_with_batch_size(cfg.batch_size,cfg.distance,[0.0,0.0,-3.0],output_path)
@@ -55,8 +54,18 @@ if __name__ == '__main__':
     azim = 180
 
 #    renderer.render(cfg.distance,[0.0,0.0,-3.0],azim,elev,output_path+"render-image.png")
-    renderer.render_with_different_azim_elev_size(cfg.distance,
-                                        cfg.vertical_views,
-                                        cfg.horizontal_views,
+    renderer.render_with_different_azim_elev_size(cfg.distance,cfg.vertical_views,cfg.horizontal_views,
                                         [0.0,0.0,-3.0],output_path)
-    renderer.saveExtrinsics(output_path+"world_to_cam_poses.yaml")
+    #renderer.saveExtrinsics(output_path)
+    #r = torch.rand(3,3)
+    #t = torch.rand(3,1)
+    #print(r)
+    #print(t)
+    #m = torch.zeros(4,4)
+    #print(m)
+    #m[:3,] = torch.cat((r,t),1)
+    #print(m)
+    #ext = torch.empty(4)
+    #ext[3] = 1
+    #print(ext)
+    

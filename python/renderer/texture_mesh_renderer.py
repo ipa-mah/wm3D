@@ -1,5 +1,6 @@
 import os, torch
 import cv2
+
 # Util function for loading meshes
 from pytorch3d.io import load_obj, load_ply, load_objs_as_meshes
 
@@ -21,9 +22,6 @@ class TextureMeshRenderer(object):
         torch.cuda.set_device(device)
         self.batch_size = 0
         self.device = torch.device(device)
-        self.R = torch.empty(1,3,3)
-        self.T = torch.empty(1,3)
-        self.cameras = []
         self.light_location = [0.0,0.0,0]
         self.raster_settings = RasterizationSettings(
             image_size=512, 
@@ -90,7 +88,6 @@ class TextureMeshRenderer(object):
         self.light_location = light_location
         lights = PointLights(device=self.device,location=[self.light_location])
         index = 0
-        tensor_r = torch.empty(1,3,3)
         for elev in elevs :
             for azim in azims :
                 R, T = look_at_view_transform(dist=dist,elev=elev,azim=azim)
@@ -110,18 +107,22 @@ class TextureMeshRenderer(object):
                 img = images[0, ..., :3].cpu().numpy()*255     
                 img = img.astype('uint8')
                 img = cv2.cvtColor(img,cv2.COLOR_BGR2RGB)
-                cv2.imwrite(output_path + 'render-image-'+ str(index)+'.png',img)
-                index += 1  
-                self.R = torch.cat((self.R,R))
-                self.T = torch.cat((self.T,T))
-
-    def saveExtrinsics(self,file_name):
-        for i in range(self.R.shape[0]):
-            print(self.R[i])
-            print(self.T[i])
-
-    def get_look_at_view_transform(self):
-        return self.R, self.T
+                extent = "{:06}".format(index)
+                cv2.imwrite(output_path + 'frame-'+ extent+'.render.png',img)
+                # Save extrinsic
+                M = np.zeros((4, 4))          
+                M[:3, :3] = R.numpy()
+                M[:3, 3] = T.numpy()
+                M[3, :] = [0, 0, 0, 1]
+                with open(output_path+"/frame-"+extent+".pose.txt","w") as f :
+                    np.savetxt(f,M[0,:],fmt="%.5f",newline=' ')
+                    f.write('\n')
+                    np.savetxt(f,M[1,:],fmt="%.5f",newline=' ')
+                    f.write('\n')
+                    np.savetxt(f,M[2,:],fmt="%.5f",newline=' ')
+                    f.write('\n')
+                    np.savetxt(f,M[3,:],fmt="%.5f",newline=' ')                  
+                index += 1        
     def get_light_location(selft):
         return self.light_location
     
